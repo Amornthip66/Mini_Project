@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการร้านซ่อม</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #4F46E5; --bg: #F3F4F6; --text: #1F2937; --white: #FFFFFF; }
+        body { font-family: 'Prompt', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; }
+        h1 { text-align: center; color: var(--primary); }
+        .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        
+        .card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 6px; box-sizing: border-box; font-family: 'Prompt'; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-family: 'Prompt'; width: 100%; font-size: 16px;}
+        button:hover { background: #4338CA; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #E5E7EB; }
+        th { background-color: #F9FAFB; font-weight: 600; }
+        .badge { padding: 4px 8px; border-radius: 20px; font-size: 12px; background: #FEF3C7; color: #D97706; }
+        .badge.done { background: #D1FAE5; color: #059669; }
+        .btn-sm { width: auto; padding: 5px 10px; font-size: 12px; margin-right: 5px; }
+        .btn-danger { background: #EF4444; }
+        .btn-success { background: #10B981; }
+
+        .top-action { display: flex; gap: 10px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🔧 ระบบจัดการร้านรับซ่อม</h1>
+    
+    <div class="grid">
+        <!-- ฝั่งซ้าย: ฟอร์มเพิ่มข้อมูล -->
+        <div class="card">
+            <h3>เพิ่มงานซ่อมใหม่</h3>
+            <div class="form-group"><label>ชื่อลูกค้า</label><input type="text" id="custName" placeholder="เช่น สมชาย"></div>
+            <div class="form-group"><label>เบอร์โทรศัพท์</label><input type="text" id="custPhone" placeholder="เช่น 0812345678"></div>
+            <div class="form-group">
+                <label>ประเภทอุปกรณ์</label>
+                <select id="deviceType">
+                    <option value="Smartphone">Smartphone (สมาร์ทโฟน)</option>
+                    <option value="Computer">Computer (คอมพิวเตอร์/โน้ตบุ๊ก)</option>
+                </select>
+            </div>
+            <div class="form-group"><label>ยี่ห้อ (Brand)</label><input type="text" id="brand" placeholder="เช่น Apple, ASUS"></div>
+            <div class="form-group"><label>รุ่น (Model)</label><input type="text" id="model" placeholder="เช่น iPhone 13, ROG Zephyrus"></div>
+            <div class="form-group"><label>อาการเสีย</label><input type="text" id="problem" placeholder="เช่น จอแตก, เปิดไม่ติด"></div>
+            <div class="form-group"><label>ข้อมูลเพิ่มเติม (ชื่อการ์ดจอ หรือ พิมพ์คำว่า seal/glue)</label><input type="text" id="extra" placeholder="เช่น RX 5700 XT หรือ กาว T8000"></div>
+            <button onclick="addNewJob()">+ บันทึกใบแจ้งซ่อม</button>
+        </div>
+
+        <!-- ฝั่งขวา: ตารางแสดงผลและจัดการ -->
+        <div class="card">
+            <div class="top-action">
+                <input type="text" id="searchInput" placeholder="ค้นหาด้วย ID หรือ เบอร์โทร..." style="flex: 1;">
+                <button onclick="searchJobs()" style="width: auto;">🔍 ค้นหา</button>
+                <button onclick="renderTable(manager.getAllJobs())" style="width: auto; background:#6B7280;">🔄 ดูทั้งหมด</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="jobTable">
+                    <thead>
+                        <tr>
+                            <th>รหัสบิล</th>
+                            <th>ลูกค้า</th>
+                            <th>อุปกรณ์</th>
+                            <th>อาการ</th>
+                            <th>รายละเอียดเฉพาะ</th>
+                            <th>สถานะ</th>
+                            <th>ค่าซ่อม</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- JS จะสร้างข้อมูลตรงนี้ -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==========================================
+// 1. Customer Class (Encapsulation)
+// ==========================================
+class Customer {
+    #name; // ใช้ # เพื่อกำหนดเป็น Private Attribute
+    #phone;
+
+    constructor(name, phone) {
+        this.#name = name;
+        this.#phone = phone;
+    }
+    // เข้าถึงผ่าน Getter
+    get name() { return this.#name; }
+    get phone() { return this.#phone; }
+}
+
+// ==========================================
+// 2. Device Class (คลาสแม่ / Encapsulation)
+// ==========================================
+class Device {
+    #brand;
+    #model;
+    #problem;
+
+    constructor(brand, model, problem) {
+        if (new.target === Device) {
+            throw new TypeError("ไม่สามารถสร้าง Object จาก Abstract Class ได้");
+        }
+        this.#brand = brand;
+        this.#model = model;
+        this.#problem = problem;
+    }
+    get brand() { return this.#brand; }
+    get model() { return this.#model; }
+    get problem() { return this.#problem; }
+
+    // Abstract Methods สำหรับให้คลาสลูกไป Override (Polymorphism)
+    calculateBaseCost() { throw new Error("ต้อง Override เมธอดนี้"); }
+    getDeviceType() { throw new Error("ต้อง Override เมธอดนี้"); }
+    getExtraDetails() { throw new Error("ต้อง Override เมธอดนี้"); }
+}
+
+// ==========================================
+// 3. Smartphone Class (Inheritance)
+// ==========================================
+class Smartphone extends Device {
+    #needT8000Adhesive;
+    #needWaterproofSeal;
+
+    constructor(brand, model, problem, needT8000Adhesive, needWaterproofSeal) {
+        super(brand, model, problem); // เรียก Constructor คลาสแม่
+        this.#needT8000Adhesive = needT8000Adhesive;
+        this.#needWaterproofSeal = needWaterproofSeal;
+    }
+
+    // Polymorphism: Override
+    calculateBaseCost() {
+        let cost = 500; // ค่าแกะเครื่องพื้นฐาน
+        if (this.#needT8000Adhesive) cost += 150;
+        if (this.#needWaterproofSeal) cost += 300;
+        return cost;
+    }
+    getDeviceType() { return "Smartphone"; }
+    getExtraDetails() { 
+        return `กาวจอ: ${this.#needT8000Adhesive ? 'ใช้' : 'ไม่ใช้'}, ซีลกันน้ำ: ${this.#needWaterproofSeal ? 'ใช้' : 'ไม่ใช้'}`; 
+    }
+}
+
+// ==========================================
+// 4. Computer Class (Inheritance)
+// ==========================================
+class Computer extends Device {
+    #gpuModel;
+
+    constructor(brand, model, problem, gpuModel) {
+        super(brand, model, problem);
+        this.#gpuModel = gpuModel;
+    }
+
+    // Polymorphism: Override
+    calculateBaseCost() {
+        let cost = 1000; // ค่าเช็คคอมพื้นฐาน
+        if (this.#gpuModel && this.#gpuModel.trim() !== "") cost += 500; // ถ้ามีการอัปเดต/ซ่อมการ์ดจอ
+        return cost;
+    }
+    getDeviceType() { return "Computer"; }
+    getExtraDetails() { return `การ์ดจอ: ${this.#gpuModel || 'ไม่มี'}`; }
+}
+
+// ==========================================
+// 5. RepairJob Class (ประกอบร่างข้อมูลบิล)
+// ==========================================
+class RepairJob {
+    #jobId;
+    #customer;
+    #device;
+    #status;
+
+    constructor(customer, device, status = "รอคิวซ่อม") {
+        this.#jobId = Math.random().toString(36).substring(2, 7).toUpperCase();
+        this.#customer = customer;
+        this.#device = device;
+        this.#status = status;
+    }
+
+    get jobId() { return this.#jobId; }
+    get customer() { return this.#customer; }
+    get device() { return this.#device; }
+    get status() { return this.#status; }
+    
+    setStatus(newStatus) { this.#status = newStatus; }
+    getTotalCost() { return this.#device.calculateBaseCost(); }
+}
+
+// ==========================================
+// 6. RepairManager Class (ระบบหลังบ้าน)
+// ==========================================
+class RepairManager {
+    #jobs = [];
+
+    addJob(job) { this.#jobs.push(job); }
+    removeJob(jobId) { this.#jobs = this.#jobs.filter(j => j.jobId !== jobId); }
+    getAllJobs() { return this.#jobs; }
+    updateStatus(jobId, status) {
+        const job = this.#jobs.find(j => j.jobId === jobId);
+        if (job) job.setStatus(status);
+    }
+
+    // Polymorphism: Overloading (ใน JS ใช้การประเมินค่า Parameter แทน)
+    searchJob(query) {
+        if (/^\d+$/.test(query)) {
+            // ถ้าค้นหาด้วยตัวเลขล้วน ให้ถือว่าเป็น "เบอร์โทร"
+            return this.#jobs.filter(j => j.customer.phone.includes(query));
+        } else {
+            // ถ้ามีตัวอักษรผสม ให้ถือว่าเป็น "รหัสบิล"
+            return this.#jobs.filter(j => j.jobId.includes(query.toUpperCase()));
+        }
+    }
+}
+
+// ==========================================
+// DOM Interaction (เชื่อมต่อโค้ดกับ GUI)
+// ==========================================
+const manager = new RepairManager();
+
+// ใส่ข้อมูลจำลอง (Mock Data)
+manager.addJob(new RepairJob(
+    new Customer("พี่ใจดี", "0811112222"), 
+    new Smartphone("OPPO", "A17k", "จอมืด", true, false), 
+    "กำลังซ่อม"
+));
+manager.addJob(new RepairJob(
+    new Customer("น้องเกมเมอร์", "0899998888"), 
+    new Computer("Custom", "PC", "ไดรเวอร์จอหาย", "RX 5700 XT")
+));
+
+function renderTable(jobList) {
+    const tbody = document.getElementById("tableBody");
+    tbody.innerHTML = "";
+    jobList.forEach(job => {
+        const statusClass = job.status === "เสร็จสิ้น" ? "badge done" : "badge";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><b>${job.jobId}</b></td>
+            <td>${job.customer.name}<br><small>${job.customer.phone}</small></td>
+            <td>${job.device.brand} ${job.device.model}</td>
+            <td>${job.device.problem}</td>
+            <td><small>${job.device.getExtraDetails()}</small></td>
+            <td><span class="${statusClass}">${job.status}</span></td>
+            <td>${job.getTotalCost().toLocaleString()} ฿</td>
+            <td>
+                <button class="btn-sm btn-success" onclick="updateStatus('${job.jobId}')">✔</button>
+                <button class="btn-sm btn-danger" onclick="deleteJob('${job.jobId}')">🗑</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function addNewJob() {
+    const name = document.getElementById("custName").value;
+    const phone = document.getElementById("custPhone").value;
+    const type = document.getElementById("deviceType").value;
+    const brand = document.getElementById("brand").value;
+    const model = document.getElementById("model").value;
+    const problem = document.getElementById("problem").value;
+    const extra = document.getElementById("extra").value.toLowerCase();
+
+    if(!name || !phone || !brand || !model) return alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+
+    let device;
+    if (type === "Smartphone") {
+        const needGlue = extra.includes("กาว") || extra.includes("glue") || extra.includes("t8000");
+        const needSeal = extra.includes("ซีล") || extra.includes("seal");
+        device = new Smartphone(brand, model, problem, needGlue, needSeal);
+    } else {
+        device = new Computer(brand, model, problem, extra);
+    }
+
+    const customer = new Customer(name, phone);
+    manager.addJob(new RepairJob(customer, device));
+    
+    renderTable(manager.getAllJobs());
+    
+    // ล้างฟอร์ม
+    document.querySelectorAll("input").forEach(input => input.value = "");
+}
+
+function updateStatus(jobId) {
+    manager.updateStatus(jobId, "เสร็จสิ้น");
+    renderTable(manager.getAllJobs());
+}
+
+function deleteJob(jobId) {
+    if(confirm("แน่ใจหรือไม่ที่จะลบรายการซ่อมนี้?")) {
+        manager.removeJob(jobId);
+        renderTable(manager.getAllJobs());
+    }
+}
+
+function searchJobs() {
+    const query = document.getElementById("searchInput").value;
+    if(query.trim() === "") return renderTable(manager.getAllJobs());
+    const results = manager.searchJob(query);
+    renderTable(results);
+}
+
+// โหลดตารางครั้งแรก
+renderTable(manager.getAllJobs());
+
+</script>
+</body>
+</html>
