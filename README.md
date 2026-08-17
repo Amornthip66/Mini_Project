@@ -43,14 +43,6 @@ RepairShop Pro เป็นเว็บแอปพลิเคชัน (Single
    - ใช้หลักการออกแบบให้คลาสแม่ (เช่น `BaseEntity`, `RepairItem`) มีลักษณะเป็น Abstract Class คือไม่สามารถสร้างออบเจกต์จากคลาสนี้ได้โดยตรง (Throw error เมื่อพยายาม Instantiate)
    - บังคับให้คลาสลูกต้องสร้างและอิมพลีเมนต์เมธอดที่จำเป็น (เช่น `calculateCost()`)
 
-## 💻 การติดตั้งและการใช้งาน (How to Run)
-เนื่องจากโปรเจกต์นี้ทำงานฝั่ง Client-side (Frontend) โดยใช้ Local Storage ในการจำลองฐานข้อมูล จึงไม่จำเป็นต้องติดตั้ง Server-side แต่อย่างใด
-1. โคลน (Clone) Repository นี้ลงเครื่อง
-   ```bash
-   git clone https://github.com/[YOUR-USERNAME]/Mini_Project.git
-   ```
-2. เปิดไฟล์ `index.html` ผ่านเว็บบราวเซอร์ (เช่น Chrome, Edge) หรือใช้ Live Server extension ใน VS Code
-
 ## 📝 ข้อมูลกลุ่ม (Team Members)
 1.68026484 นางสาวปานชนก พรหมศรีสวัสดิ์  
 2.68026552 นายอมรทิพย์         เรืองคำ
