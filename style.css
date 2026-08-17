@@ -703,6 +703,59 @@ tbody tr:last-child td { border-bottom: none; }
     font-size: 0.85rem;
 }
 
+
+/* ═════════════════════════════════════════════════════════════ */
+/* ───────── CUSTOM BACKGROUND CURVE & PARTICLES ───────── */
+/* ═════════════════════════════════════════════════════════════ */
+
+/* ป้องกันไม่ให้เกิด Scrollbar แนวนอนเมื่อละอองลอยออกนอกขอบจอ */
+body {
+    overflow-x: hidden;
+}
+
+/* สร้างพื้นหลังโค้งที่ด้านล่าง */
+body::before {
+    content: '';
+    position: fixed;
+    bottom: -15vh; /* ดึงให้จมลงไปด้านล่างเล็กน้อยเพื่อให้วงดูสมูทและแบนขึ้น */
+    left: -10vw;
+    width: 120vw; /* ให้กว้างกว่าหน้าจอเพื่อไม่ให้เห็นขอบซ้ายขวา */
+    height: 50vh;
+    /* ไล่สี Gradient จากสีฟ้าอ่อน (primary-light) ขึ้นไปยังสีพื้นหลังเดิม (bg) */
+    background: linear-gradient(to top, var(--primary-light) 0%, var(--bg) 100%);
+    border-radius: 50% 50% 0 0;
+    z-index: -1; /* ให้อยู่หลังสุด */
+    pointer-events: none; /* ไม่ให้รบกวนการคลิกเมาส์ */
+}
+
+/* สไตล์ของละอองที่จะเกิดตามเมาส์ */
+.cursor-particle {
+    position: fixed;
+    width: 15px;
+    height: 15px;
+    filter: blur(4px); /* ทำให้ขอบฟุ้งๆ */
+    border-radius: 50%;
+    pointer-events: none; /* ไม่ให้รบกวนการคลิก */
+    z-index: 9999; /* ให้อยู่บนสุดเสมอ */
+    opacity: 0.6;
+    transform: translate(-50%, -50%);
+    animation: floatFade 0.8s ease-out forwards; /* เล่นอนิเมชั่น 0.8 วินาทีแล้วค้างสถานะสุดท้าย */
+}
+
+/* อนิเมชั่นให้ละอองค่อยๆ ลอยกระจายและจางหายไป */
+@keyframes floatFade {
+    0% { 
+        opacity: 0.6; 
+        transform: translate(-50%, -50%) scale(1); 
+    }
+    100% { 
+        opacity: 0; 
+        /* ดึงค่าตัวแปร --dx, --dy จาก JavaScript เพื่อให้ทิศทางสุ่มกระจาย */
+        transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.2); 
+    }
+}
+
+
 /* ═════════════════════════════════════════════════════════════ */
 /* ───────── RESPONSIVE (ปรับหน้าจอให้ยืดหยุ่นทุกอุปกรณ์) ───────── */
 /* ═════════════════════════════════════════════════════════════ */
