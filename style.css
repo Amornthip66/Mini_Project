@@ -705,53 +705,74 @@ tbody tr:last-child td { border-bottom: none; }
 
 
 /* ═════════════════════════════════════════════════════════════ */
-/* ───────── CUSTOM BACKGROUND CURVE & PARTICLES ───────── */
+/* ───────── CUSTOM BACKGROUND CURVE & PARTICLES (MODERN) ───────── */
 /* ═════════════════════════════════════════════════════════════ */
 
-/* ป้องกันไม่ให้เกิด Scrollbar แนวนอนเมื่อละอองลอยออกนอกขอบจอ */
+/* ป้องกันไม่ให้เกิด Scrollbar แนวนอน */
 body {
     overflow-x: hidden;
 }
 
-/* สร้างพื้นหลังโค้งที่ด้านล่าง */
+/* สร้างพื้นหลังโค้งที่ด้านล่าง ให้ดูโมเดิร์นและสมูท (Dark Gradient) */
 body::before {
     content: '';
     position: fixed;
-    bottom: -15vh; /* ดึงให้จมลงไปด้านล่างเล็กน้อยเพื่อให้วงดูสมูทและแบนขึ้น */
+    bottom: -20vh; 
     left: -10vw;
-    width: 120vw; /* ให้กว้างกว่าหน้าจอเพื่อไม่ให้เห็นขอบซ้ายขวา */
-    height: 50vh;
-    /* ไล่สี Gradient จากสีฟ้าอ่อน (primary-light) ขึ้นไปยังสีพื้นหลังเดิม (bg) */
-    background: linear-gradient(to top, var(--primary-light) 0%, var(--bg) 100%);
+    width: 120vw;
+    height: 65vh;
+    
+    /* 
+       ไล่สี Gradient โมเดิร์น: 
+       เริ่มจากสีน้ำเงินเข้มสุดด้านล่าง (primary-dark)
+       -> ค่อยๆ จางลงเป็นสีฟ้าโปร่งใสที่ระยะ 55%
+       -> กลืนเนียนสนิทไปกับสีพื้นหลังเดิม (bg) ที่ระยะ 85% ขึ้นไป
+    */
+    background: linear-gradient(
+        to top, 
+        var(--primary-dark) 0%, 
+        rgba(37, 99, 235, 0.12) 55%, 
+        var(--bg) 85%
+    );
+    
+    /* สร้างความโค้งมนที่ขอบบน */
     border-radius: 50% 50% 0 0;
-    z-index: -1; /* ให้อยู่หลังสุด */
-    pointer-events: none; /* ไม่ให้รบกวนการคลิกเมาส์ */
+    
+    /* เพิ่มเงาเรืองแสง (Glow Effect) บางๆ สีน้ำเงินเข้มรอบๆ วงโค้ง ให้มิติที่ดูลึกและหรูหรา */
+    box-shadow: 0 -10px 60px rgba(29, 78, 216, 0.15);
+    
+    z-index: -1; 
+    pointer-events: none; 
 }
 
-/* สไตล์ของละอองที่จะเกิดตามเมาส์ */
+/* สไตล์ของละอองเมาส์ (ปรับให้ดูมีแสงฟุ้งเรืองแสงแบบพรีเมียม) */
 .cursor-particle {
     position: fixed;
-    width: 15px;
-    height: 15px;
-    filter: blur(4px); /* ทำให้ขอบฟุ้งๆ */
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
-    pointer-events: none; /* ไม่ให้รบกวนการคลิก */
-    z-index: 9999; /* ให้อยู่บนสุดเสมอ */
-    opacity: 0.6;
+    pointer-events: none;
+    z-index: 9999;
+    
+    /* เอฟเฟกต์เบลอและแสงฟุ้ง */
+    filter: blur(2px);
+    box-shadow: 0 0 10px currentColor; /* ให้ฟุ้งแสงสีเดียวกับตัวละออง */
+    
+    opacity: 0.7;
     transform: translate(-50%, -50%);
-    animation: floatFade 0.8s ease-out forwards; /* เล่นอนิเมชั่น 0.8 วินาทีแล้วค้างสถานะสุดท้าย */
+    animation: floatFadeModern 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
 }
 
-/* อนิเมชั่นให้ละอองค่อยๆ ลอยกระจายและจางหายไป */
-@keyframes floatFade {
+/* อนิเมชั่นละอองที่เด้งและจางหายอย่างนุ่มนวล */
+@keyframes floatFadeModern {
     0% { 
-        opacity: 0.6; 
+        opacity: 0.8; 
         transform: translate(-50%, -50%) scale(1); 
     }
     100% { 
         opacity: 0; 
-        /* ดึงค่าตัวแปร --dx, --dy จาก JavaScript เพื่อให้ทิศทางสุ่มกระจาย */
-        transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.2); 
+        /* ดึงค่าพิกัดจาก JavaScript มาใช้ */
+        transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.1); 
     }
 }
 
