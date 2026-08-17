@@ -485,23 +485,75 @@ tbody tr:last-child td { border-bottom: none; }
 
 .activity-time { font-size: .7rem; color: var(--text-muted); margin-top: 2px; }
 
-/* ───────── RESPONSIVE ───────── */
-@media (max-width: 768px) {
-    .sidebar { transform: translateX(-100%); }
-    .sidebar.open { transform: translateX(0); }
-    .main { margin-left: 0; }
-    .topbar { padding: 12px 16px; }
-    .content { padding: 16px; }
-    .form-grid { grid-template-columns: 1fr; }
-    .stats-grid { grid-template-columns: 1fr 1fr; }
-    .search-box { width: 200px; }
-}
-
-@media (max-width: 480px) {
-    .stats-grid { grid-template-columns: 1fr; }
-}
-
 /* ───────── SCROLLBAR ───────── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+/* ═════════════════════════════════════════════════════════════ */
+/* ───────── RESPONSIVE (ปรับแต่งใหม่ให้ยืดหยุ่นทุกอุปกรณ์) ───────── */
+/* ═════════════════════════════════════════════════════════════ */
+
+/* แท็บเล็ตและหน้าจอขนาดกลาง */
+@media (max-width: 992px) {
+    /* บังคับหน้าจอ Dashboard (กราฟและสรุป) ให้แสดงผล 1 คอลัมน์บนแท็บเล็ต/มือถือ */
+    #page-dashboard > div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* แท็บเล็ตแนวตั้งและสมาร์ทโฟนทั่วไป */
+@media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; }
+    
+    /* จัดการแถบด้านบนให้พับลงมาสวยงาม */
+    .topbar { 
+        flex-direction: column; 
+        align-items: flex-start;
+        gap: 16px;
+        padding: 16px; 
+    }
+    .topbar-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .search-box { width: 100%; max-width: none; flex-grow: 1; margin-right: 12px; }
+    
+    .content { padding: 16px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    
+    /* ปรับแต่งป๊อปอัป Modal สำหรับมือถือ */
+    .modal {
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+}
+
+/* สมาร์ทโฟนหน้าจอขนาดเล็ก */
+@media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    
+    .topbar-right {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    .search-box { margin-right: 0; }
+    .topbar-right .btn { width: 100%; justify-content: center; }
+
+    /* ปรับแต่งกลุ่มตัวกรองค้นหาในหน้า Repairs ให้เรียงกันเต็มจอแนวตั้ง */
+    .page > div[style*="display:flex"] {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+    .page > div[style*="display:flex"] > select,
+    .page > div[style*="display:flex"] > button {
+        width: 100%;
+    }
+}
