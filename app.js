@@ -863,26 +863,39 @@ function renderDashboard() {
     // Summary Counts
     if (document.getElementById("summaryCounts")) {
         document.getElementById("summaryCounts").innerHTML = `
-            <ul style="list-style:none; padding:0; display:flex; flex-direction:column; gap:16px; font-size:.95rem;">
-                <li style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:8px;">
-                    <span style="color:var(--text-muted);">💻 Computers</span> <strong>${s.computers}</strong>
-                </li>
-                <li style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:8px;">
-                    <span style="color:var(--text-muted);">📱 Phones</span> <strong>${s.smartphones}</strong>
-                </li>
-                <li style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:8px; margin-top: 10px;">
-                    <span style="color:var(--text-muted);">⏳ Pending</span> <strong>${s.pending}</strong>
-                </li>
-                <li style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:8px;">
-                    <span style="color:var(--text-muted);">🔧 In Progress</span> <strong>${s.inProgress}</strong>
-                </li>
-                <li style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:8px;">
-                    <span style="color:var(--text-muted);">✅ Completed</span> <strong>${s.completed}</strong>
-                </li>
-                <li style="display:flex; justify-content:space-between;">
-                    <span style="color:var(--text-muted);">📦 Ready</span> <strong>${s.ready}</strong>
-                </li>
-            </ul>
+            <!-- กลุ่มที่ 1: Repairs by Type -->
+            <div class="summary-group">
+                <div class="summary-title">Device Type</div>
+                <div class="summary-item">
+                    <span>💻 Computers</span>
+                    <strong>${s.computers}</strong>
+                </div>
+                <div class="summary-item">
+                    <span>📱 Phones</span>
+                    <strong>${s.smartphones}</strong>
+                </div>
+            </div>
+            
+            <!-- กลุ่มที่ 2: Repairs by Status -->
+            <div class="summary-group">
+                <div class="summary-title">Repair Status</div>
+                <div class="summary-item">
+                    <span>⏳ Pending</span>
+                    <strong>${s.pending}</strong>
+                </div>
+                <div class="summary-item">
+                    <span>🔧 In Progress</span>
+                    <strong>${s.inProgress}</strong>
+                </div>
+                <div class="summary-item">
+                    <span>✅ Completed</span>
+                    <strong>${s.completed}</strong>
+                </div>
+                <div class="summary-item">
+                    <span>📦 Ready</span>
+                    <strong>${s.ready}</strong>
+                </div>
+            </div>
         `;
     }
 
