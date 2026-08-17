@@ -60,16 +60,33 @@
             <!-- ════════════ DASHBOARD PAGE ════════════ -->
             <div class="page active" id="page-dashboard">
                 <div class="stats-grid" id="statsGrid"></div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                    <div class="card">
-                        <div class="card-header"><h3>📊 Repairs by Type</h3></div>
-                        <div class="card-body"><div class="chart-bars" id="typeChart"></div></div>
+                
+                <!-- โครงสร้าง Grid แบ่งซ้าย-ขวา -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items: stretch;">
+                    
+                    <!-- ฝั่งซ้าย: กราฟ Type อยู่บน Status -->
+                    <div style="display:flex; flex-direction:column; gap:20px;">
+                        <div class="card">
+                            <div class="card-header"><h3>📊 Repairs by Type</h3></div>
+                            <div class="card-body"><div class="chart-bars" id="typeChart"></div></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h3>📈 Repairs by Status</h3></div>
+                            <div class="card-body"><div class="chart-bars" id="statusChart"></div></div>
+                        </div>
                     </div>
-                    <div class="card">
-                        <div class="card-header"><h3>📈 Repairs by Status</h3></div>
-                        <div class="card-body"><div class="chart-bars" id="statusChart"></div></div>
+
+                    <!-- ฝั่งขวา: สรุปจำนวนอุปกรณ์และสถานะ -->
+                    <div class="card" style="display: flex; flex-direction: column;">
+                        <div class="card-header"><h3>📋 Summary Counts</h3></div>
+                        <!-- เพิ่ม id="summaryCounts" ตรงนี้เพื่อให้ app.js ดึงข้อมูลมาแสดง -->
+                        <div class="card-body" id="summaryCounts" style="flex-grow: 1;">
+                            <!-- ข้อมูลจะถูกโหลดผ่าน JavaScript -->
+                        </div>
                     </div>
+
                 </div>
+                
                 <div class="card" style="margin-top:20px;">
                     <div class="card-header"><h3>🕐 Recent Activity</h3></div>
                     <div class="card-body"><div class="activity-list" id="recentActivity"></div></div>
@@ -78,20 +95,25 @@
 
             <!-- ════════════ REPAIRS PAGE ════════════ -->
             <div class="page" id="page-repairs">
-                <div style="display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; align-items:center;">
-                    <select id="filterStatus" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:.85rem;">
-                        <option value="">All Statuses</option>
-                        <option value="Pending">Pending</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Ready for Pickup">Ready for Pickup</option>
-                        <option value="Cancelled">Cancelled</option>
-                    </select>
-                    <select id="filterType" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:.85rem;">
-                        <option value="">All Types</option>
-                        <option value="Computer">Computer</option>
-                        <option value="Smartphone">Smartphone</option>
-                    </select>
+                <div style="display:flex; gap:12px; margin-bottom:18px; flex-wrap:wrap; align-items:center;">
+                    <div class="select-wrapper">
+                        <select id="filterStatus" class="custom-select">
+                            <option value="">📋 All Statuses</option>
+                            <option value="Pending">⏳ Pending</option>
+                            <option value="In Progress">🔧 In Progress</option>
+                            <option value="Completed">✅ Completed</option>
+                            <option value="Ready for Pickup">📦 Ready for Pickup</option>
+                            <option value="Cancelled">❌ Cancelled</option>
+                        </select>
+                    </div>
+
+                    <div class="select-wrapper">
+                        <select id="filterType" class="custom-select">
+                            <option value="">⚙️ All Types</option>
+                            <option value="Computer">💻 Computer</option>
+                            <option value="Smartphone">📱 Smartphone</option>
+                        </select>
+                    </div>
                     <button class="btn btn-primary" onclick="openRepairModal()">+ New Repair</button>
                 </div>
                 <div class="card">

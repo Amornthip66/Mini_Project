@@ -860,6 +860,45 @@ function renderDashboard() {
         </div>
     `;
 
+    // Summary Counts
+    if (document.getElementById("summaryCounts")) {
+        document.getElementById("summaryCounts").innerHTML = `
+            <!-- กลุ่มที่ 1: Repairs by Type -->
+            <div class="summary-group">
+                <div class="summary-title">Device Type</div>
+                <div class="summary-item">
+                    <span>💻 Computers</span>
+                    <strong>${s.computers}</strong>
+                </div>
+                <div class="summary-item">
+                    <span>📱 Phones</span>
+                    <strong>${s.smartphones}</strong>
+                </div>
+            </div>
+            
+            <!-- กลุ่มที่ 2: Repairs by Status -->
+            <div class="summary-group">
+                <div class="summary-title">Repair Status</div>
+                <div class="summary-item">
+                    <span>⏳ Pending</span>
+                    <strong>${s.pending}</strong>
+                </div>
+                <div class="summary-item">
+                    <span>🔧 In Progress</span>
+                    <strong>${s.inProgress}</strong>
+                </div>
+                <div class="summary-item">
+                    <span>✅ Completed</span>
+                    <strong>${s.completed}</strong>
+                </div>
+                <div class="summary-item">
+                    <span>📦 Ready</span>
+                    <strong>${s.ready}</strong>
+                </div>
+            </div>
+        `;
+    }
+
     // Recent activity
     const recent = store.repairs.slice(-5).reverse();
     document.getElementById("recentActivity").innerHTML = recent.length ? recent.map(r => {
@@ -1070,6 +1109,45 @@ function seedDemoData() {
     store.addRepair({ deviceType: "Smartphone", deviceName: "Google Pixel 8", customerId: c3.id, technicianId: t2.id, issue: "Water damage — fell in pool, won't turn on", status: "Completed", partsCost: 60, laborHours: 2, priority: "Urgent", phoneOS: "Android", notes: "Rice drying didn't work, ultrasonic cleaning done" });
     store.addRepair({ deviceType: "Computer", deviceName: "HP Pavilion Desktop", customerId: c2.id, technicianId: t3.id, issue: "Blue screen of death (BSOD) on boot", status: "Ready for Pickup", partsCost: 0, laborHours: 1.5, priority: "High", os: "Windows 10", notes: "RAM replaced, all tests passed" });
 }
+
+
+
+/* ═══════════════════════════════════════════════════════
+   CURSOR PARTICLE EFFECT (ละอองฟุ้งๆ ตามเมาส์)
+   ═══════════════════════════════════════════════════════ */
+
+document.addEventListener("mousemove", (e) => {
+    // ลดปริมาณการสร้างละออง (สุ่มสร้างประมาณ 25% ของครั้งที่ขยับเมาส์) เพื่อไม่ให้รกจอเกินไป
+    if (Math.random() > 0.25) return;
+
+    const particle = document.createElement("div");
+    particle.className = "cursor-particle";
+    
+    // ตั้งค่าพิกัดให้ตรงกับหัวลูกศรเมาส์
+    particle.style.left = `${e.clientX}px`;
+    particle.style.top = `${e.clientY}px`;
+
+    // สุ่มระยะการฟุ้งกระจายในแนวแกน X และ Y
+    // ให้กระจายออกซ้าย-ขวา (-40px ถึง 40px) และลอยขึ้นด้านบน (-60px ถึง 10px)
+    const dx = (Math.random() - 0.5) * 80; 
+    const dy = (Math.random() - 0.5) * 70 - 25; 
+    
+    // ส่งค่าระยะฟุ้งเข้าไปในตัวแปร CSS
+    particle.style.setProperty("--dx", `${dx}px`);
+    particle.style.setProperty("--dy", `${dy}px`);
+
+    // สุ่มสีละอองจากกลุ่มสีหลักของแอป
+    const colors = ['var(--primary)', 'var(--info)', '#60a5fa'];
+    particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+
+    // นำไปแปะในหน้าเว็บ
+    document.body.appendChild(particle);
+
+    // ทำลาย Element ทิ้งหลังจากอนิเมชั่นเล่นจบ (800ms) เพื่อป้องกันแรมนิ่ง
+    setTimeout(() => {
+        particle.remove();
+    }, 800);
+});
 
 seedDemoData();
 renderAll();
