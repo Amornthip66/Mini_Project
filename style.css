@@ -61,7 +61,6 @@ body {
     transition: background 0.3s ease;
 }
 
-/* เพิ่มแสงเงา (Glow Effect) ด้านหลังโลโก้ตอนเอาเมาส์ชี้ */
 .sidebar-brand::before {
     content: '';
     position: absolute;
@@ -90,7 +89,6 @@ body {
     gap: 10px;
     position: relative;
     z-index: 1;
-    /* ทำตัวอักษรเป็นสี Gradient สว่างๆ โทนฟ้า-ฟ้าอมเขียว */
     background: linear-gradient(90deg, #60a5fa 0%, #22d3ee 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -99,13 +97,11 @@ body {
 
 .sidebar-brand h1 .icon { 
     font-size: 1.5rem; 
-    /* คืนค่าสีให้อีโมจิประแจ */
     -webkit-text-fill-color: initial;
     display: inline-block;
     transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* แอนิเมชันประแจขยับตอน Hover */
 .sidebar-brand:hover h1 .icon {
     transform: rotate(25deg) scale(1.15);
 }
@@ -125,7 +121,6 @@ body {
 .sidebar-brand:hover p {
     color: #cbd5e1;
 }
-
 
 .sidebar nav { flex: 1; padding: 12px 0; overflow-y: auto; }
 
@@ -477,46 +472,6 @@ tbody tr:last-child td { border-bottom: none; }
 @keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
 
-/* ───────── CHARTS (CSS-ONLY BAR CHART) ───────── */
-.chart-bars {
-    display: flex;
-    align-items: flex-end;
-    gap: 14px;
-    height: 160px;
-    padding: 12px 0;
-}
-
-.chart-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
-
-.chart-bar {
-    width: 100%;
-    max-width: 48px;
-    border-radius: 4px 4px 0 0;
-    transition: height .5s ease;
-    position: relative;
-}
-
-.chart-bar .tooltip {
-    position: absolute;
-    top: -28px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--text);
-    color: #fff;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: .7rem;
-    font-weight: 600;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--transition);
-}
-
-.chart-bar:hover .tooltip { opacity: 1; }
-
-.chart-label { font-size: .7rem; color: var(--text-muted); font-weight: 500; }
-
 /* ───────── RECENT ACTIVITY ───────── */
 .activity-list { display: flex; flex-direction: column; gap: 0; }
 
@@ -546,18 +501,10 @@ tbody tr:last-child td { border-bottom: none; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 
 /* ═════════════════════════════════════════════════════════════ */
-/* ───────── RESPONSIVE (ปรับแต่งใหม่ให้ยืดหยุ่นทุกอุปกรณ์) ───────── */
+/* ───────── COMPONENTS (กราฟ สรุป แอร์ดรอปดาวน์) ───────── */
 /* ═════════════════════════════════════════════════════════════ */
 
-/* แท็บเล็ตและหน้าจอขนาดกลาง */
-@media (max-width: 992px) {
-    /* บังคับหน้าจอ Dashboard (กราฟและสรุป) ให้แสดงผล 1 คอลัมน์บนแท็บเล็ต/มือถือ */
-    #page-dashboard > div[style*="grid-template-columns"] {
-        grid-template-columns: 1fr !important;
-    }
-}
-
-/* ───────── CHARTS (ปรับปรุงให้มีลูกเล่นน่าดึงดูด) ───────── */
+/* ───────── CHARTS (ลูกเล่นกราฟน่าดึงดูด) ───────── */
 .chart-bars {
     display: flex;
     align-items: flex-end;
@@ -580,24 +527,22 @@ tbody tr:last-child td { border-bottom: none; }
     width: 100%;
     max-width: 48px;
     border-radius: 6px 6px 0 0;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* ทำให้เด้งนุ่มนวลขึ้น */
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
-    cursor: pointer; /* เปลี่ยนเมาส์เป็นรูปมือ */
-    box-shadow: inset 0 -4px 0 rgba(0,0,0,0.1); /* มิติเงาด้านล่าง */
+    cursor: pointer;
+    box-shadow: inset 0 -4px 0 rgba(0,0,0,0.1);
 }
 
-/* เอฟเฟกต์เวลาเอาเมาส์ไปชี้ (Hover) */
 .chart-bar:hover {
-    filter: brightness(1.15); /* สว่างขึ้น */
-    transform: translateY(-8px) scale(1.05); /* ลอยขึ้นและขยายออกเล็กน้อย */
-    box-shadow: 0 10px 20px rgba(0,0,0,0.15), inset 0 -4px 0 rgba(0,0,0,0.05); /* เงาตกกระทบให้ดูมีมิติ */
+    filter: brightness(1.15);
+    transform: translateY(-8px) scale(1.05);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15), inset 0 -4px 0 rgba(0,0,0,0.05);
 }
 
-/* เอฟเฟกต์เวลาคลิก (Active) */
 .chart-bar:active {
-    transform: translateY(-2px) scale(0.98); /* ยุบลงเวลาคลิก */
+    transform: translateY(-2px) scale(0.98);
     filter: brightness(0.9);
-    transition: all 0.1s ease; /* ตอบสนองทันที */
+    transition: all 0.1s ease;
 }
 
 .chart-bar .tooltip {
@@ -614,11 +559,10 @@ tbody tr:last-child td { border-bottom: none; }
     white-space: nowrap;
     opacity: 0;
     pointer-events: none;
-    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); /* Tooltip เด้งดึ๋ง */
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     box-shadow: var(--shadow-md);
 }
 
-/* สามเหลี่ยมชี้ลงของ Tooltip */
 .chart-bar .tooltip::after {
     content: '';
     position: absolute;
@@ -632,7 +576,7 @@ tbody tr:last-child td { border-bottom: none; }
 
 .chart-bar:hover .tooltip { 
     opacity: 1; 
-    transform: translateX(-50%) translateY(0); /* เด้งขึ้นมาประจำตำแหน่ง */
+    transform: translateX(-50%) translateY(0);
 }
 
 .chart-label { 
@@ -642,7 +586,6 @@ tbody tr:last-child td { border-bottom: none; }
     transition: color 0.3s ease;
 }
 
-/* เปลี่ยนสีตัวหนังสือด้านล่างเวลานำเมาส์ไปชี้ที่กราฟ */
 .chart-bar-group:hover .chart-label {
     color: var(--text);
 }
@@ -690,7 +633,6 @@ tbody tr:last-child td { border-bottom: none; }
     transition: color 0.3s ease;
 }
 
-/* เอฟเฟกต์ Gradient เวลาเอาเมาส์ไปชี้ (Hover) ให้เข้ากับสีหลัก */
 .summary-item:hover {
     background: linear-gradient(135deg, var(--primary), var(--info));
     transform: translateY(-3px) scale(1.02);
@@ -702,6 +644,75 @@ tbody tr:last-child td { border-bottom: none; }
     color: #ffffff;
 }
 
+/* ───────── CUSTOM SELECT (Dropdown โมเดิร์นในหน้า Repairs) ───────── */
+.select-wrapper {
+    position: relative;
+    display: inline-block;
+    min-width: 160px;
+}
+
+.select-wrapper::after {
+    content: "▼";
+    font-size: 0.6rem;
+    color: var(--primary);
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    transition: transform 0.3s ease;
+}
+
+.select-wrapper:focus-within::after {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.custom-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 100%;
+    padding: 10px 36px 10px 16px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    transition: all 0.3s ease;
+}
+
+.custom-select:hover {
+    border-color: #93c5fd;
+    background: #f8fafc;
+}
+
+.custom-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-light);
+    background: var(--surface);
+}
+
+.custom-select option {
+    background: var(--surface);
+    color: var(--text);
+    padding: 10px;
+    font-size: 0.85rem;
+}
+
+/* ═════════════════════════════════════════════════════════════ */
+/* ───────── RESPONSIVE (ปรับหน้าจอให้ยืดหยุ่นทุกอุปกรณ์) ───────── */
+/* ═════════════════════════════════════════════════════════════ */
+
+/* แท็บเล็ตและหน้าจอขนาดกลาง */
+@media (max-width: 992px) {
+    #page-dashboard > div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+}
 
 /* แท็บเล็ตแนวตั้งและสมาร์ทโฟนทั่วไป */
 @media (max-width: 768px) {
@@ -709,7 +720,6 @@ tbody tr:last-child td { border-bottom: none; }
     .sidebar.open { transform: translateX(0); }
     .main { margin-left: 0; }
     
-    /* จัดการแถบด้านบนให้พับลงมาสวยงาม */
     .topbar { 
         flex-direction: column; 
         align-items: flex-start;
@@ -726,7 +736,6 @@ tbody tr:last-child td { border-bottom: none; }
     .form-grid { grid-template-columns: 1fr; }
     .stats-grid { grid-template-columns: 1fr 1fr; }
     
-    /* ปรับแต่งป๊อปอัป Modal สำหรับมือถือ */
     .modal {
         width: 100%;
         height: 100%;
@@ -753,7 +762,7 @@ tbody tr:last-child td { border-bottom: none; }
         flex-direction: column;
         align-items: stretch !important;
     }
-    .page > div[style*="display:flex"] > select,
+    .page > div[style*="display:flex"] > .select-wrapper,
     .page > div[style*="display:flex"] > button {
         width: 100%;
     }
