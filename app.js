@@ -860,6 +860,32 @@ function renderDashboard() {
         </div>
     `;
 
+    // Summary Counts
+    if (document.getElementById("summaryCounts")) {
+        document.getElementById("summaryCounts").innerHTML = `
+            <ul style="list-style:none; padding:0; display:flex; flex-direction:column; gap:16px; font-size:.95rem;">
+                <li style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:8px;">
+                    <span style="color:var(--text-muted);">💻 Computers</span> <strong>${s.computers}</strong>
+                </li>
+                <li style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:8px;">
+                    <span style="color:var(--text-muted);">📱 Phones</span> <strong>${s.smartphones}</strong>
+                </li>
+                <li style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:8px; margin-top: 10px;">
+                    <span style="color:var(--text-muted);">⏳ Pending</span> <strong>${s.pending}</strong>
+                </li>
+                <li style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:8px;">
+                    <span style="color:var(--text-muted);">🔧 In Progress</span> <strong>${s.inProgress}</strong>
+                </li>
+                <li style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:8px;">
+                    <span style="color:var(--text-muted);">✅ Completed</span> <strong>${s.completed}</strong>
+                </li>
+                <li style="display:flex; justify-content:space-between;">
+                    <span style="color:var(--text-muted);">📦 Ready</span> <strong>${s.ready}</strong>
+                </li>
+            </ul>
+        `;
+    }
+
     // Recent activity
     const recent = store.repairs.slice(-5).reverse();
     document.getElementById("recentActivity").innerHTML = recent.length ? recent.map(r => {

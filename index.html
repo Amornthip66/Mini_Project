@@ -58,70 +58,39 @@
         <div class="content">
 
             <!-- ════════════ DASHBOARD PAGE ════════════ -->
-            <div class="page active" id="page-dashboard">
-                <div class="stats-grid" id="statsGrid"></div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                    <div class="card">
-                        <div class="card-header"><h3>📊 Repairs by Type</h3></div>
-                        <div class="card-body"><div class="chart-bars" id="typeChart"></div></div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header"><h3>📈 Repairs by Status</h3></div>
-                        <div class="card-body"><div class="chart-bars" id="statusChart"></div></div>
-                    </div>
-                </div>
-                <div class="card" style="margin-top:20px;">
-                    <div class="card-header"><h3>🕐 Recent Activity</h3></div>
-                    <div class="card-body"><div class="activity-list" id="recentActivity"></div></div>
-                </div>
-            </div>
+                <div class="page active" id="page-dashboard">
+                    <div class="stats-grid" id="statsGrid"></div>
+                    
+                    <!-- แก้ไขโครงสร้างตรงนี้เป็นต้นไป -->
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                        
+                        <!-- ฝั่งซ้าย: กราฟ Type อยู่บน Status -->
+                        <div style="display:flex; flex-direction:column; gap:20px;">
+                            <div class="card">
+                                <div class="card-header"><h3>📊 Repairs by Type</h3></div>
+                                <div class="card-body"><div class="chart-bars" id="typeChart"></div></div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header"><h3>📈 Repairs by Status</h3></div>
+                                <div class="card-body"><div class="chart-bars" id="statusChart"></div></div>
+                            </div>
+                        </div>
 
-            <!-- ════════════ REPAIRS PAGE ════════════ -->
-            <div class="page" id="page-repairs">
-                <div style="display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; align-items:center;">
-                    <select id="filterStatus" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:.85rem;">
-                        <option value="">All Statuses</option>
-                        <option value="Pending">Pending</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Ready for Pickup">Ready for Pickup</option>
-                        <option value="Cancelled">Cancelled</option>
-                    </select>
-                    <select id="filterType" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:.85rem;">
-                        <option value="">All Types</option>
-                        <option value="Computer">Computer</option>
-                        <option value="Smartphone">Smartphone</option>
-                    </select>
-                    <button class="btn btn-primary" onclick="openRepairModal()">+ New Repair</button>
-                </div>
-                <div class="card">
-                    <div class="card-body">
-                        <div class="table-wrap">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Customer</th>
-                                        <th>Device</th>
-                                        <th>Type</th>
-                                        <th>Issue</th>
-                                        <th>Status</th>
-                                        <th>Cost</th>
-                                        <th>Date</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="repairsTable"></tbody>
-                            </table>
+                        <!-- ฝั่งขวา: สรุปจำนวนอุปกรณ์และสถานะ -->
+                        <div class="card">
+                            <div class="card-header"><h3>📋 Summary Counts</h3></div>
+                            <div class="card-body" id="summaryCounts">
+                                <!-- ข้อมูลจะถูกดึงมาใส่ตรงนี้ด้วย JavaScript -->
+                            </div>
                         </div>
-                        <div class="empty-state" id="repairsEmpty" style="display:none;">
-                            <div class="icon">🔩</div>
-                            <h4>No repairs yet</h4>
-                            <p>Click "New Repair" to add the first repair job.</p>
-                        </div>
+
+                    </div>
+                    
+                    <div class="card" style="margin-top:20px;">
+                        <div class="card-header"><h3>🕐 Recent Activity</h3></div>
+                        <div class="card-body"><div class="activity-list" id="recentActivity"></div></div>
                     </div>
                 </div>
-            </div>
 
             <!-- ════════════ CUSTOMERS PAGE ════════════ -->
             <div class="page" id="page-customers">
