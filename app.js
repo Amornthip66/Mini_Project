@@ -56,7 +56,7 @@ class RepairItem extends BaseEntity {
     getDeviceSpecs() { throw new Error("Subclasses must implement getDeviceSpecs()."); }
 
     /** Polymorphic display string */
-    get displayInfo() { return `${this.type} Repair #${this.id}`; }
+    get displayInfo() { return `งานซ่อม #${this.id}`; }
 
     // ── ENCAPSULATION: controlled access via getters/setters ──
     get status() { return this.#status; }
@@ -138,7 +138,7 @@ class ComputerRepair extends RepairItem {
         };
     }
 
-    get displayInfo() { return `💻 ${this.#deviceName} (Computer #${this.id})`; }
+    get displayInfo() { return `💻 ${this.#deviceName} (คอมพิวเตอร์ #${this.id})`; }
 
     // Getters & setters (ENCAPSULATION)
     get deviceName() { return this.#deviceName; }
@@ -207,7 +207,7 @@ class SmartphoneRepair extends RepairItem {
         };
     }
 
-    get displayInfo() { return `📱 ${this.#deviceName} (Phone #${this.id})`; }
+    get displayInfo() { return `📱 ${this.#deviceName} (สมาร์ตโฟน #${this.id})`; }
 
     get deviceName() { return this.#deviceName; }
     set deviceName(v) { this.#deviceName = v; }
@@ -302,7 +302,7 @@ class Technician extends Person {
     set rating(v) { this.#rating = v; }
 
     get type() { return "Technician"; }
-    get displayInfo() { return `🧑‍🔧 ${this.name} (${this.#specialization})`; }
+    get displayInfo() { return `🧑‍🔧 ${this.name} (${th(SPEC_TH, this.#specialization)})`; }
 
     toJSON() {
         return { ...super.toJSON(), specialization: this.#specialization, hourlyRate: this.#hourlyRate, skills: this.#skills, rating: this.#rating };
@@ -345,7 +345,7 @@ class Invoice extends BaseEntity {
     get paid() { return this.#paid; }
     set paid(v) { this.#paid = v; }
     get type() { return "Invoice"; }
-    get displayInfo() { return `Invoice #${this.id}`; }
+    get displayInfo() { return `ใบแจ้งหนี้ #${this.id}`; }
 
     toJSON() {
         return { id: this.id, repairId: this.#repairId, customerId: this.#customerId, partsCost: this.#partsCost, laborCost: this.#laborCost, taxRate: this.#taxRate, paid: this.#paid };
@@ -382,7 +382,7 @@ class DataStore {
                 const allIds = [...this.#repairs, ...this.#customers, ...this.#technicians, ...this.#invoices].map(e => e.id);
                 BaseEntity._nextId = allIds.length ? Math.max(...allIds) + 1 : 1;
             }
-        } catch (e) { console.warn("Failed to load data:", e); }
+        } catch (e) { console.warn("โหลดข้อมูลไม่สำเร็จ:", e); }
     }
 
     #save() {
@@ -412,7 +412,7 @@ class DataStore {
 
     updateRepair(id, updates) {
         const idx = this.#repairs.findIndex(r => r.id === id);
-        if (idx === -1) throw new Error("Repair not found");
+        if (idx === -1) throw new Error("ไม่พบงานซ่อมที่ต้องการ");
         // Reconstruct to apply changes cleanly
         const old = this.#repairs[idx];
         const merged = { ...old.toJSON(), ...updates, id };
@@ -438,7 +438,7 @@ class DataStore {
     }
     updateCustomer(id, data) {
         const idx = this.#customers.findIndex(c => c.id === id);
-        if (idx === -1) throw new Error("Customer not found");
+        if (idx === -1) throw new Error("ไม่พบลูกค้าที่ต้องการ");
         this.#customers[idx] = new Customer({ ...data, id });
         this.#save();
     }
@@ -458,7 +458,7 @@ class DataStore {
     }
     updateTechnician(id, data) {
         const idx = this.#technicians.findIndex(t => t.id === id);
-        if (idx === -1) throw new Error("Technician not found");
+        if (idx === -1) throw new Error("ไม่พบช่างซ่อมที่ต้องการ");
         this.#technicians[idx] = new Technician({ ...data, id });
         this.#save();
     }
@@ -522,12 +522,33 @@ const store = new DataStore();
 const navItems = document.querySelectorAll(".nav-item");
 const pages    = document.querySelectorAll(".page");
 const titles   = {
-    dashboard:   ["Dashboard", "Overview of your repair shop"],
-    repairs:     ["Repairs", "Manage all repair jobs"],
-    customers:   ["Customers", "Your customer database"],
-    technicians: ["Technicians", "Technician management"],
-    billing:     ["Billing", "Invoices and revenue"],
+    dashboard:   ["แดชบอร์ด", "ภาพรวมร้านซ่อมของคุณ"],
+    repairs:     ["งานซ่อม", "จัดการงานซ่อมทั้งหมด"],
+    customers:   ["ลูกค้า", "ฐานข้อมูลลูกค้าของคุณ"],
+    technicians: ["ช่างซ่อม", "จัดการข้อมูลช่างซ่อม"],
+    billing:     ["การเงิน", "ใบแจ้งหนี้และรายได้"],
 };
+
+/* ── ตัวช่วยแปลข้อความสถานะ / ประเภท / ความสำคัญ เป็นภาษาไทย ── */
+const STATUS_TH = {
+    "Pending":         "รอดำเนินการ",
+    "In Progress":     "กำลังซ่อม",
+    "Completed":       "ซ่อมเสร็จแล้ว",
+    "Ready for Pickup": "รอรับเครื่อง",
+    "Cancelled":       "ยกเลิก",
+    "Paid":            "จ่ายแล้ว",
+    "Unpaid":          "ยังไม่จ่าย",
+};
+const TYPE_TH = { "Computer": "คอมพิวเตอร์", "Smartphone": "สมาร์ตโฟน" };
+const PRIORITY_TH = { "Normal": "ปกติ", "High": "สูง", "Urgent": "ด่วนมาก" };
+const SPEC_TH = {
+    "Computer Hardware":    "ฮาร์ดแวร์คอมพิวเตอร์",
+    "Computer Software":    "ซอฟต์แวร์คอมพิวเตอร์",
+    "Smartphone Hardware":  "ฮาร์ดแวร์สมาร์ตโฟน",
+    "Smartphone Software":  "ซอฟต์แวร์สมาร์ตโฟน",
+    "General":              "ทั่วไป",
+};
+const th = (dict, val) => dict[val] || val;
 
 navItems.forEach(item => {
     item.addEventListener("click", () => {
@@ -567,11 +588,11 @@ function populateDropdowns() {
     const custSel = document.getElementById("repairCustomer");
     const techSel = document.getElementById("repairTechnician");
 
-    custSel.innerHTML = '<option value="">Select customer...</option>' +
+    custSel.innerHTML = '<option value="">เลือกลูกค้า...</option>' +
         store.customers.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
 
-    techSel.innerHTML = '<option value="">Unassigned</option>' +
-        store.technicians.map(t => `<option value="${t.id}">${t.name} (${t.specialization})</option>`).join("");
+    techSel.innerHTML = '<option value="">ยังไม่มอบหมาย</option>' +
+        store.technicians.map(t => `<option value="${t.id}">${t.name} (${th(SPEC_TH, t.specialization)})</option>`).join("");
 }
 
 function toggleDeviceFields() {
@@ -590,7 +611,7 @@ function openRepairModal(id = null) {
     const form = document.getElementById("repairForm");
     form.reset();
     document.getElementById("repairId").value = "";
-    document.getElementById("repairModalTitle").textContent = id ? "Edit Repair" : "New Repair";
+    document.getElementById("repairModalTitle").textContent = id ? "แก้ไขงานซ่อม" : "เพิ่มงานซ่อม";
 
     if (id) {
         const r = store.getRepairById(id);
@@ -639,19 +660,19 @@ function saveRepair(e) {
 
     if (id) {
         store.updateRepair(+id, data);
-        toast("Repair updated successfully!");
+        toast("บันทึกการแก้ไขงานซ่อมเรียบร้อยแล้ว!");
     } else {
         store.addRepair(data);
-        toast("Repair created successfully!");
+        toast("เพิ่มงานซ่อมเรียบร้อยแล้ว!");
     }
     closeModal("repairModal");
     renderAll();
 }
 
 function deleteRepair(id) {
-    if (!confirm("Delete this repair?")) return;
+    if (!confirm("ยืนยันการลบงานซ่อมนี้?")) return;
     store.deleteRepair(id);
-    toast("Repair deleted.", "info");
+    toast("ลบงานซ่อมแล้ว", "info");
     renderAll();
 }
 
@@ -665,24 +686,24 @@ function viewRepair(id) {
 
     document.getElementById("detailContent").innerHTML = `
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:.9rem;">
-            <div><strong>Repair ID:</strong> #${r.id}</div>
-            <div><strong>Type:</strong> <span class="badge badge-${r.type === 'Computer' ? 'computer' : 'phone'}">${r.type}</span></div>
-            <div><strong>Device:</strong> ${specs.deviceName}</div>
-            <div><strong>Status:</strong> <span class="badge badge-${statusClass(r.status)}">${r.status}</span></div>
-            <div><strong>Priority:</strong> ${r.priority}</div>
-            <div><strong>Date:</strong> ${r.createdAt.toLocaleDateString()}</div>
-            <div><strong>Customer:</strong> ${cust ? cust.name : 'N/A'}</div>
-            <div><strong>Technician:</strong> ${tech ? tech.name : 'N/A'}</div>
-            <div style="grid-column:1/-1;"><strong>Issue:</strong> ${specs.issue}</div>
-            ${specs.os ? `<div><strong>OS:</strong> ${specs.os}</div>` : ""}
-            ${specs.phoneOS ? `<div><strong>Phone OS:</strong> ${specs.phoneOS}</div>` : ""}
-            <div><strong>Parts Cost:</strong> $${specs.partsCost.toFixed(2)}</div>
-            <div><strong>Labor Hours:</strong> ${specs.laborHours}h</div>
+            <div><strong>รหัสงานซ่อม:</strong> #${r.id}</div>
+            <div><strong>ประเภท:</strong> <span class="badge badge-${r.type === 'Computer' ? 'computer' : 'phone'}">${th(TYPE_TH, r.type)}</span></div>
+            <div><strong>อุปกรณ์:</strong> ${specs.deviceName}</div>
+            <div><strong>สถานะ:</strong> <span class="badge badge-${statusClass(r.status)}">${th(STATUS_TH, r.status)}</span></div>
+            <div><strong>ความสำคัญ:</strong> ${th(PRIORITY_TH, r.priority)}</div>
+            <div><strong>วันที่:</strong> ${r.createdAt.toLocaleDateString("th-TH")}</div>
+            <div><strong>ลูกค้า:</strong> ${cust ? cust.name : 'ไม่ระบุ'}</div>
+            <div><strong>ช่างผู้รับผิดชอบ:</strong> ${tech ? tech.name : 'ยังไม่มอบหมาย'}</div>
+            <div style="grid-column:1/-1;"><strong>อาการเสีย:</strong> ${specs.issue}</div>
+            ${specs.os ? `<div><strong>ระบบปฏิบัติการ:</strong> ${specs.os}</div>` : ""}
+            ${specs.phoneOS ? `<div><strong>ระบบปฏิบัติการมือถือ:</strong> ${specs.phoneOS}</div>` : ""}
+            <div><strong>ค่าอะไหล่:</strong> ฿${specs.partsCost.toFixed(2)}</div>
+            <div><strong>ชั่วโมงงานซ่อม:</strong> ${specs.laborHours} ชม.</div>
             <div style="grid-column:1/-1; border-top:1px solid var(--border); padding-top:12px;">
-                <strong style="font-size:1.1rem;">Total Cost: $${cost.toFixed(2)}</strong>
-                <span style="color:var(--text-muted); font-size:.8rem;"> (Polymorphic calculation: ${r.type === 'Computer' ? '$40/hr' : '$30/hr'} + parts)</span>
+                <strong style="font-size:1.1rem;">รวมค่าซ่อม: ฿${cost.toFixed(2)}</strong>
+                <span style="color:var(--text-muted); font-size:.8rem;"> (คำนวณตามประเภทเครื่อง: ${r.type === 'Computer' ? '฿40/ชม.' : '฿30/ชม.'} + ค่าอะไหล่)</span>
             </div>
-            ${specs.notes ? `<div style="grid-column:1/-1;"><strong>Notes:</strong> ${specs.notes}</div>` : ""}
+            ${specs.notes ? `<div style="grid-column:1/-1;"><strong>หมายเหตุ:</strong> ${specs.notes}</div>` : ""}
         </div>
     `;
     openModal("detailModal");
@@ -697,7 +718,7 @@ function openCustomerModal(id = null) {
     const form = document.getElementById("customerForm");
     form.reset();
     document.getElementById("customerId").value = "";
-    document.getElementById("customerModalTitle").textContent = id ? "Edit Customer" : "New Customer";
+    document.getElementById("customerModalTitle").textContent = id ? "แก้ไขลูกค้า" : "เพิ่มลูกค้า";
 
     if (id) {
         const c = store.getCustomerById(id);
@@ -722,19 +743,19 @@ function saveCustomer(e) {
     };
     if (id) {
         store.updateCustomer(+id, data);
-        toast("Customer updated!");
+        toast("บันทึกการแก้ไขลูกค้าเรียบร้อยแล้ว!");
     } else {
         store.addCustomer(data);
-        toast("Customer added!");
+        toast("เพิ่มลูกค้าเรียบร้อยแล้ว!");
     }
     closeModal("customerModal");
     renderAll();
 }
 
 function deleteCustomer(id) {
-    if (!confirm("Delete this customer?")) return;
+    if (!confirm("ยืนยันการลบลูกค้ารายนี้?")) return;
     store.deleteCustomer(id);
-    toast("Customer deleted.", "info");
+    toast("ลบลูกค้าแล้ว", "info");
     renderAll();
 }
 
@@ -747,7 +768,7 @@ function openTechnicianModal(id = null) {
     const form = document.getElementById("technicianForm");
     form.reset();
     document.getElementById("technicianId").value = "";
-    document.getElementById("techModalTitle").textContent = id ? "Edit Technician" : "New Technician";
+    document.getElementById("techModalTitle").textContent = id ? "แก้ไขช่างซ่อม" : "เพิ่มช่างซ่อม";
 
     if (id) {
         const t = store.getTechnicianById(id);
@@ -774,19 +795,19 @@ function saveTechnician(e) {
     };
     if (id) {
         store.updateTechnician(+id, data);
-        toast("Technician updated!");
+        toast("บันทึกการแก้ไขช่างซ่อมเรียบร้อยแล้ว!");
     } else {
         store.addTechnician(data);
-        toast("Technician added!");
+        toast("เพิ่มช่างซ่อมเรียบร้อยแล้ว!");
     }
     closeModal("technicianModal");
     renderAll();
 }
 
 function deleteTechnician(id) {
-    if (!confirm("Delete this technician?")) return;
+    if (!confirm("ยืนยันการลบช่างซ่อมรายนี้?")) return;
     store.deleteTechnician(id);
-    toast("Technician deleted.", "info");
+    toast("ลบช่างซ่อมแล้ว", "info");
     renderAll();
 }
 
@@ -816,10 +837,10 @@ function renderAll() {
 function renderDashboard() {
     const s = store.getStats();
     document.getElementById("statsGrid").innerHTML = `
-        <div class="stat-card"><div class="stat-icon blue">🔩</div><div class="stat-info"><h3>${s.totalRepairs}</h3><p>Total Repairs</p></div></div>
-        <div class="stat-card"><div class="stat-icon orange">⏳</div><div class="stat-info"><h3>${s.pending + s.inProgress}</h3><p>Active Jobs</p></div></div>
-        <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><h3>${s.completed}</h3><p>Completed</p></div></div>
-        <div class="stat-card"><div class="stat-icon red">💰</div><div class="stat-info"><h3>$${s.totalRevenue.toFixed(2)}</h3><p>Total Revenue</p></div></div>
+        <div class="stat-card"><div class="stat-icon blue">🔩</div><div class="stat-info"><h3>${s.totalRepairs}</h3><p>งานซ่อมทั้งหมด</p></div></div>
+        <div class="stat-card"><div class="stat-icon orange">⏳</div><div class="stat-info"><h3>${s.pending + s.inProgress}</h3><p>งานที่กำลังดำเนินการ</p></div></div>
+        <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><h3>${s.completed}</h3><p>ซ่อมเสร็จแล้ว</p></div></div>
+        <div class="stat-card"><div class="stat-icon red">💰</div><div class="stat-info"><h3>฿${s.totalRevenue.toFixed(2)}</h3><p>รายได้รวม</p></div></div>
     `;
 
     // Type chart
@@ -829,13 +850,13 @@ function renderDashboard() {
             <div class="chart-bar" style="height:${(s.computers/maxType)*100}%;background:#7c3aed;">
                 <span class="tooltip">${s.computers}</span>
             </div>
-            <span class="chart-label">💻 Computers</span>
+            <span class="chart-label">💻 คอมพิวเตอร์</span>
         </div>
         <div class="chart-bar-group">
             <div class="chart-bar" style="height:${(s.smartphones/maxType)*100}%;background:#db2777;">
                 <span class="tooltip">${s.smartphones}</span>
             </div>
-            <span class="chart-label">📱 Phones</span>
+            <span class="chart-label">📱 สมาร์ตโฟน</span>
         </div>
     `;
 
@@ -844,19 +865,19 @@ function renderDashboard() {
     document.getElementById("statusChart").innerHTML = `
         <div class="chart-bar-group">
             <div class="chart-bar" style="height:${(s.pending/maxStatus)*100}%;background:#d97706;"><span class="tooltip">${s.pending}</span></div>
-            <span class="chart-label">Pending</span>
+            <span class="chart-label">รอดำเนินการ</span>
         </div>
         <div class="chart-bar-group">
             <div class="chart-bar" style="height:${(s.inProgress/maxStatus)*100}%;background:#2563eb;"><span class="tooltip">${s.inProgress}</span></div>
-            <span class="chart-label">In Progress</span>
+            <span class="chart-label">กำลังซ่อม</span>
         </div>
         <div class="chart-bar-group">
             <div class="chart-bar" style="height:${(s.completed/maxStatus)*100}%;background:#16a34a;"><span class="tooltip">${s.completed}</span></div>
-            <span class="chart-label">Completed</span>
+            <span class="chart-label">ซ่อมเสร็จแล้ว</span>
         </div>
         <div class="chart-bar-group">
             <div class="chart-bar" style="height:${(s.ready/maxStatus)*100}%;background:#0891b2;"><span class="tooltip">${s.ready}</span></div>
-            <span class="chart-label">Ready</span>
+            <span class="chart-label">รอรับเครื่อง</span>
         </div>
     `;
 
@@ -865,34 +886,34 @@ function renderDashboard() {
         document.getElementById("summaryCounts").innerHTML = `
             <!-- กลุ่มที่ 1: Repairs by Type -->
             <div class="summary-group">
-                <div class="summary-title">Device Type</div>
+                <div class="summary-title">ประเภทอุปกรณ์</div>
                 <div class="summary-item">
-                    <span>💻 Computers</span>
+                    <span>💻 คอมพิวเตอร์</span>
                     <strong>${s.computers}</strong>
                 </div>
                 <div class="summary-item">
-                    <span>📱 Phones</span>
+                    <span>📱 สมาร์ตโฟน</span>
                     <strong>${s.smartphones}</strong>
                 </div>
             </div>
             
             <!-- กลุ่มที่ 2: Repairs by Status -->
             <div class="summary-group">
-                <div class="summary-title">Repair Status</div>
+                <div class="summary-title">สถานะงานซ่อม</div>
                 <div class="summary-item">
-                    <span>⏳ Pending</span>
+                    <span>⏳ รอดำเนินการ</span>
                     <strong>${s.pending}</strong>
                 </div>
                 <div class="summary-item">
-                    <span>🔧 In Progress</span>
+                    <span>🔧 กำลังซ่อม</span>
                     <strong>${s.inProgress}</strong>
                 </div>
                 <div class="summary-item">
-                    <span>✅ Completed</span>
+                    <span>✅ ซ่อมเสร็จแล้ว</span>
                     <strong>${s.completed}</strong>
                 </div>
                 <div class="summary-item">
-                    <span>📦 Ready</span>
+                    <span>📦 รอรับเครื่อง</span>
                     <strong>${s.ready}</strong>
                 </div>
             </div>
@@ -908,10 +929,10 @@ function renderDashboard() {
             <div class="activity-dot" style="background:${dotColor}"></div>
             <div>
                 <div><strong>${specs.deviceName}</strong> — ${specs.issue.substring(0, 60)}${specs.issue.length > 60 ? '...' : ''}</div>
-                <div class="activity-time">${r.createdAt.toLocaleDateString()} · $${r.calculateCost().toFixed(2)} · <span class="badge badge-${statusClass(r.status)}">${r.status}</span></div>
+                <div class="activity-time">${r.createdAt.toLocaleDateString("th-TH")} · ฿${r.calculateCost().toFixed(2)} · <span class="badge badge-${statusClass(r.status)}">${th(STATUS_TH, r.status)}</span></div>
             </div>
         </div>`;
-    }).join("") : '<div class="empty-state"><p>No recent activity</p></div>';
+    }).join("") : '<div class="empty-state"><p>ไม่มีกิจกรรมล่าสุด</p></div>';
 }
 
 function renderRepairs() {
@@ -949,13 +970,13 @@ function renderRepairs() {
         const cost  = r.calculateCost(); // POLYMORPHISM: different cost per type
         return `<tr>
             <td><strong>#${r.id}</strong></td>
-            <td>${cust ? cust.name : '<em style="color:var(--text-muted)">N/A</em>'}</td>
+            <td>${cust ? cust.name : '<em style="color:var(--text-muted)">ไม่ระบุ</em>'}</td>
             <td>${specs.deviceName}</td>
-            <td><span class="badge badge-${r.type === 'Computer' ? 'computer' : 'phone'}">${r.type}</span></td>
+            <td><span class="badge badge-${r.type === 'Computer' ? 'computer' : 'phone'}">${th(TYPE_TH, r.type)}</span></td>
             <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${specs.issue}">${specs.issue}</td>
-            <td><span class="badge badge-${statusClass(r.status)}">${r.status}</span></td>
-            <td><strong>$${cost.toFixed(2)}</strong></td>
-            <td>${r.createdAt.toLocaleDateString()}</td>
+            <td><span class="badge badge-${statusClass(r.status)}">${th(STATUS_TH, r.status)}</span></td>
+            <td><strong>฿${cost.toFixed(2)}</strong></td>
+            <td>${r.createdAt.toLocaleDateString("th-TH")}</td>
             <td class="actions">
                 <button class="btn btn-sm btn-outline" onclick="viewRepair(${r.id})" title="View">👁</button>
                 <button class="btn btn-sm btn-outline" onclick="openRepairModal(${r.id})" title="Edit">✏️</button>
@@ -986,7 +1007,7 @@ function renderCustomers() {
             <td>${c.email}</td>
             <td>${c.phone}</td>
             <td>${cRepairs.length}</td>
-            <td><strong>$${totalSpent.toFixed(2)}</strong></td>
+            <td><strong>฿${totalSpent.toFixed(2)}</strong></td>
             <td class="actions">
                 <button class="btn btn-sm btn-outline" onclick="openCustomerModal(${c.id})" title="Edit">✏️</button>
                 <button class="btn btn-sm btn-danger" onclick="deleteCustomer(${c.id})" title="Delete">🗑</button>
@@ -1013,7 +1034,7 @@ function renderTechnicians() {
         return `<tr>
             <td><strong>#${t.id}</strong></td>
             <td>${t.name}</td>
-            <td>${t.specialization}</td>
+            <td>${th(SPEC_TH, t.specialization)}</td>
             <td>${active}</td>
             <td>${done}</td>
             <td>⭐ ${t.rating.toFixed(1)}</td>
@@ -1048,10 +1069,10 @@ function renderBilling() {
     const unpaid = totalRev - paid;
 
     document.getElementById("billingStats").innerHTML = `
-        <div class="stat-card"><div class="stat-icon blue">📄</div><div class="stat-info"><h3>${invoices.length}</h3><p>Total Invoices</p></div></div>
-        <div class="stat-card"><div class="stat-icon green">💵</div><div class="stat-info"><h3>$${paid.toFixed(2)}</h3><p>Paid</p></div></div>
-        <div class="stat-card"><div class="stat-icon orange">⏳</div><div class="stat-info"><h3>$${unpaid.toFixed(2)}</h3><p>Outstanding</p></div></div>
-        <div class="stat-card"><div class="stat-icon red">📊</div><div class="stat-info"><h3>$${totalRev.toFixed(2)}</h3><p>Total Revenue</p></div></div>
+        <div class="stat-card"><div class="stat-icon blue">📄</div><div class="stat-info"><h3>${invoices.length}</h3><p>ใบแจ้งหนี้ทั้งหมด</p></div></div>
+        <div class="stat-card"><div class="stat-icon green">💵</div><div class="stat-info"><h3>฿${paid.toFixed(2)}</h3><p>ชำระแล้ว</p></div></div>
+        <div class="stat-card"><div class="stat-icon orange">⏳</div><div class="stat-info"><h3>฿${unpaid.toFixed(2)}</h3><p>ค้างชำระ</p></div></div>
+        <div class="stat-card"><div class="stat-icon red">📊</div><div class="stat-info"><h3>฿${totalRev.toFixed(2)}</h3><p>รายได้รวม</p></div></div>
     `;
 
     if (invoices.length === 0) {
@@ -1066,13 +1087,13 @@ function renderBilling() {
         const cust   = store.getCustomerById(inv.customerId);
         return `<tr>
             <td><strong>INV-${String(inv.id).padStart(4, '0')}</strong></td>
-            <td>${cust ? cust.name : 'N/A'}</td>
+            <td>${cust ? cust.name : 'ไม่ระบุ'}</td>
             <td>#${inv.repairId}${repair ? ' (' + repair.getDeviceSpecs().deviceName + ')' : ''}</td>
-            <td>$${inv.partsCost.toFixed(2)}</td>
-            <td>$${inv.laborCost.toFixed(2)}</td>
-            <td>$${inv.tax.toFixed(2)}</td>
-            <td><strong>$${inv.total.toFixed(2)}</strong></td>
-            <td><span class="badge badge-${inv.paid ? 'completed' : 'pending'}">${inv.paid ? 'Paid' : 'Unpaid'}</span></td>
+            <td>฿${inv.partsCost.toFixed(2)}</td>
+            <td>฿${inv.laborCost.toFixed(2)}</td>
+            <td>฿${inv.tax.toFixed(2)}</td>
+            <td><strong>฿${inv.total.toFixed(2)}</strong></td>
+            <td><span class="badge badge-${inv.paid ? 'completed' : 'pending'}">${inv.paid ? 'จ่ายแล้ว' : 'ยังไม่จ่าย'}</span></td>
         </tr>`;
     }).join("");
 }
@@ -1092,22 +1113,22 @@ function seedDemoData() {
     if (store.customers.length > 0) return;
 
     // Customers
-    const c1 = store.addCustomer({ name: "Alice Johnson", email: "alice@email.com", phone: "+1 555-0101", address: "123 Oak St" });
-    const c2 = store.addCustomer({ name: "Bob Martinez", email: "bob@email.com", phone: "+1 555-0102", address: "456 Pine Ave" });
-    const c3 = store.addCustomer({ name: "Carol Lee", email: "carol@email.com", phone: "+1 555-0103", address: "789 Elm Blvd" });
+    const c1 = store.addCustomer({ name: "Alice Johnson", email: "alice@email.com", phone: "081-234-5678", address: "123 ถนนโอ๊ค" });
+    const c2 = store.addCustomer({ name: "Bob Martinez", email: "bob@email.com", phone: "082-345-6789", address: "456 ถนนสน" });
+    const c3 = store.addCustomer({ name: "Carol Lee", email: "carol@email.com", phone: "083-456-7890", address: "789 ถนนเอล์ม" });
 
     // Technicians
-    const t1 = store.addTechnician({ name: "Mike Chen", specialization: "Computer Hardware", phone: "+1 555-0201", hourlyRate: 40, skills: ["Diagnostics", "Soldering", "Motherboard repair"], rating: 4.8 });
-    const t2 = store.addTechnician({ name: "Sara Patel", specialization: "Smartphone Software", phone: "+1 555-0202", hourlyRate: 35, skills: ["iOS", "Android", "Data recovery"], rating: 4.6 });
-    const t3 = store.addTechnician({ name: "Tom Wilson", specialization: "General", phone: "+1 555-0203", hourlyRate: 30, skills: ["Screen replacement", "Battery swap", "Diagnostics"], rating: 4.3 });
+    const t1 = store.addTechnician({ name: "Mike Chen", specialization: "Computer Hardware", phone: "084-567-8901", hourlyRate: 40, skills: ["วินิจฉัยปัญหา", "บัดกรี", "ซ่อมเมนบอร์ด"], rating: 4.8 });
+    const t2 = store.addTechnician({ name: "Sara Patel", specialization: "Smartphone Software", phone: "085-678-9012", hourlyRate: 35, skills: ["iOS", "Android", "กู้คืนข้อมูล"], rating: 4.6 });
+    const t3 = store.addTechnician({ name: "Tom Wilson", specialization: "General", phone: "086-789-0123", hourlyRate: 30, skills: ["เปลี่ยนหน้าจอ", "เปลี่ยนแบตเตอรี่", "วินิจฉัยปัญหา"], rating: 4.3 });
 
     // Repairs — demonstrating POLYMORPHISM (different cost formulas)
-    store.addRepair({ deviceType: "Computer", deviceName: "Dell XPS 15", customerId: c1.id, technicianId: t1.id, issue: "Overheating and random shutdowns during heavy workloads", status: "In Progress", partsCost: 45, laborHours: 3, priority: "High", os: "Windows 11", notes: "Thermal paste replacement needed" });
-    store.addRepair({ deviceType: "Smartphone", deviceName: "iPhone 15 Pro", customerId: c2.id, technicianId: t2.id, issue: "Cracked screen after drop, touch not responding", status: "Completed", partsCost: 120, laborHours: 1.5, priority: "Normal", phoneOS: "iOS", notes: "OEM screen used" });
-    store.addRepair({ deviceType: "Computer", deviceName: "MacBook Air M2", customerId: c3.id, technicianId: t1.id, issue: "Keyboard keys sticking, Trackpad erratic behavior", status: "Pending", partsCost: 80, laborHours: 2, priority: "Normal", os: "macOS Ventura", notes: "Customer authorized up to $200" });
-    store.addRepair({ deviceType: "Smartphone", deviceName: "Samsung Galaxy S24", customerId: c1.id, technicianId: t3.id, issue: "Battery draining in 3 hours, gets hot during charging", status: "In Progress", partsCost: 35, laborHours: 1, priority: "Normal", phoneOS: "Android", notes: "" });
-    store.addRepair({ deviceType: "Smartphone", deviceName: "Google Pixel 8", customerId: c3.id, technicianId: t2.id, issue: "Water damage — fell in pool, won't turn on", status: "Completed", partsCost: 60, laborHours: 2, priority: "Urgent", phoneOS: "Android", notes: "Rice drying didn't work, ultrasonic cleaning done" });
-    store.addRepair({ deviceType: "Computer", deviceName: "HP Pavilion Desktop", customerId: c2.id, technicianId: t3.id, issue: "Blue screen of death (BSOD) on boot", status: "Ready for Pickup", partsCost: 0, laborHours: 1.5, priority: "High", os: "Windows 10", notes: "RAM replaced, all tests passed" });
+    store.addRepair({ deviceType: "Computer", deviceName: "Dell XPS 15", customerId: c1.id, technicianId: t1.id, issue: "เครื่องร้อนเกินไปและดับเองเวลาใช้งานหนัก", status: "In Progress", partsCost: 45, laborHours: 3, priority: "High", os: "Windows 11", notes: "ต้องเปลี่ยนยางระบายความร้อน" });
+    store.addRepair({ deviceType: "Smartphone", deviceName: "iPhone 15 Pro", customerId: c2.id, technicianId: t2.id, issue: "หน้าจอแตกหลังตกพื้น สัมผัสไม่ตอบสนอง", status: "Completed", partsCost: 120, laborHours: 1.5, priority: "Normal", phoneOS: "iOS", notes: "ใช้หน้าจอแท้จากผู้ผลิต" });
+    store.addRepair({ deviceType: "Computer", deviceName: "MacBook Air M2", customerId: c3.id, technicianId: t1.id, issue: "ปุ่มคีย์บอร์ดติดๆ ทัชแพดทำงานผิดปกติ", status: "Pending", partsCost: 80, laborHours: 2, priority: "Normal", os: "macOS Ventura", notes: "ลูกค้าอนุมัติค่าซ่อมไม่เกิน 200 บาท" });
+    store.addRepair({ deviceType: "Smartphone", deviceName: "Samsung Galaxy S24", customerId: c1.id, technicianId: t3.id, issue: "แบตหมดใน 3 ชั่วโมง ตัวเครื่องร้อนตอนชาร์จ", status: "In Progress", partsCost: 35, laborHours: 1, priority: "Normal", phoneOS: "Android", notes: "" });
+    store.addRepair({ deviceType: "Smartphone", deviceName: "Google Pixel 8", customerId: c3.id, technicianId: t2.id, issue: "น้ำเข้าเครื่อง ตกสระน้ำ เปิดไม่ติด", status: "Completed", partsCost: 60, laborHours: 2, priority: "Urgent", phoneOS: "Android", notes: "ตากข้าวไม่หาย ต้องล้างด้วยคลื่นอัลตร้าโซนิค" });
+    store.addRepair({ deviceType: "Computer", deviceName: "HP Pavilion Desktop", customerId: c2.id, technicianId: t3.id, issue: "จอฟ้า (BSOD) ตอนเปิดเครื่อง", status: "Ready for Pickup", partsCost: 0, laborHours: 1.5, priority: "High", os: "Windows 10", notes: "เปลี่ยนแรมใหม่ ทดสอบผ่านทุกข้อ" });
 }
 
 
