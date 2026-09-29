@@ -745,6 +745,17 @@ function togglePayment(id) {
     renderAll();
 }
 
+/** มาร์คใบแจ้งหนี้ว่าลูกค้าชำระเงินแล้ว (หรือยกเลิก) จากหน้าการเงิน */
+function markInvoicePaid(invoiceId, paid) {
+    const inv = store.invoices.find(i => i.id === invoiceId);
+    if (!inv) return;
+    if (!paid && !confirm(`ยืนยันเปลี่ยนใบแจ้งหนี้ INV-${String(invoiceId).padStart(4, '0')} เป็น "ยังไม่ชำระเงิน"?`)) return;
+    store.setPaymentStatus(inv.repairId, paid ? "Paid" : "Unpaid");
+    if (paid) toast(`ใบแจ้งหนี้ INV-${String(invoiceId).padStart(4, '0')} ชำระเงินแล้ว`);
+    else toast(`ใบแจ้งหนี้ INV-${String(invoiceId).padStart(4, '0')} เปลี่ยนเป็นยังไม่ชำระเงิน`, "info");
+    renderAll();
+}
+
 function viewRepair(id) {
     const r = store.getRepairById(id);
     if (!r) return;
@@ -1157,6 +1168,10 @@ function renderBilling() {
             <td>฿${inv.tax.toFixed(2)}</td>
             <td><strong>฿${inv.total.toFixed(2)}</strong></td>
             <td><span class="badge badge-${inv.paid ? 'paid' : 'unpaid'}">${inv.paid ? PAYMENT_TH.Paid : PAYMENT_TH.Unpaid}</span></td>
+            <td class="actions">
+                <button class="btn btn-sm ${inv.paid ? 'btn-outline' : 'btn-success'}" onclick="markInvoicePaid(${inv.id}, ${!inv.paid})" title="${inv.paid ? 'เปลี่ยนเป็นยังไม่ชำระเงิน' : 'ยืนยันชำระเงินแล้ว'}">💵</button>
+                ${repair ? `<button class="btn btn-sm btn-outline" onclick="viewRepair(${repair.id})" title="ดูรายละเอียดงานซ่อม">👁</button>` : ''}
+            </td>
         </tr>`;
     }).join("");
 }
