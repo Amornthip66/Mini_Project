@@ -328,6 +328,8 @@ tbody tr:last-child td { border-bottom: none; }
 .badge-cancelled { background: var(--danger-light); color: var(--danger); }
 .badge-computer { background: #ede9fe; color: #7c3aed; }
 .badge-phone { background: #fce7f3; color: #db2777; }
+.badge-paid { background: var(--success-light); color: var(--success); }
+.badge-unpaid { background: var(--danger-light); color: var(--danger); }
 
 .actions { display: flex; gap: 4px; }
 

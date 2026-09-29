@@ -128,6 +128,7 @@
                                         <th>ประเภท</th>
                                         <th>อาการเสีย</th>
                                         <th>สถานะ</th>
+                                        <th>การชำระเงิน</th>
                                         <th>ค่าซ่อม</th>
                                         <th>วันที่</th>
                                         <th>จัดการ</th>
@@ -197,7 +198,7 @@
                     <div class="card-body">
                         <div class="table-wrap">
                             <table>
-                                <thead><tr><th>เลขที่ใบแจ้งหนี้</th><th>ลูกค้า</th><th>งานซ่อม</th><th>ค่าอะไหล่</th><th>ค่าแรง</th><th>ภาษี</th><th>รวม</th><th>สถานะ</th></tr></thead>
+                                <thead><tr><th>เลขที่ใบแจ้งหนี้</th><th>ลูกค้า</th><th>งานซ่อม</th><th>ค่าอะไหล่</th><th>ค่าแรง</th><th>ภาษี</th><th>รวม</th><th>สถานะการชำระเงิน</th></tr></thead>
                                 <tbody id="billingTable"></tbody>
                             </table>
                         </div>
@@ -274,6 +275,13 @@
                         <option value="Completed">ซ่อมเสร็จแล้ว</option>
                         <option value="Ready for Pickup">รอรับเครื่อง</option>
                         <option value="Cancelled">ยกเลิก</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>สถานะการชำระเงิน</label>
+                    <select id="repairPaymentStatus">
+                        <option value="Unpaid">ยังไม่ชำระเงิน</option>
+                        <option value="Paid">ชำระเงินแล้ว</option>
                     </select>
                 </div>
                 <div class="form-group">
