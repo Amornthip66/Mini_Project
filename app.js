@@ -38,12 +38,17 @@ class RepairItem extends BaseEntity {
     #status;       // ENCAPSULATION: private field
     #priority;
     #createdAt;
+    #paymentStatus; // ENCAPSULATION: สถานะการชำระเงิน ("Unpaid" | "Paid")
 
-    constructor(id, status = "Pending", priority = "Normal") {
+    static PAYMENT_STATUSES = ["Unpaid", "Paid"];
+
+    constructor(id, status = "Pending", priority = "Normal", paymentStatus = "Unpaid") {
         super(id);
         this.#status = status;
         this.#priority = priority;
         this.#createdAt = new Date();
+        // ข้อมูลเก่าที่ยังไม่มี paymentStatus จะถูกตั้งเป็น "Unpaid" อัตโนมัติ
+        this.#paymentStatus = RepairItem.PAYMENT_STATUSES.includes(paymentStatus) ? paymentStatus : "Unpaid";
     }
 
     // ── ABSTRACTION: defining interface ──
@@ -69,6 +74,13 @@ class RepairItem extends BaseEntity {
     get priority() { return this.#priority; }
     set priority(val) { this.#priority = val; }
 
+    get paymentStatus() { return this.#paymentStatus; }
+    set paymentStatus(val) {
+        if (!RepairItem.PAYMENT_STATUSES.includes(val)) throw new Error(`Invalid payment status: ${val}`);
+        this.#paymentStatus = val;
+    }
+    get isPaid() { return this.#paymentStatus === "Paid"; }
+
     get createdAt() { return this.#createdAt; }
     set createdAt(d) { this.#createdAt = d; }
 
@@ -78,6 +90,7 @@ class RepairItem extends BaseEntity {
             id: this.id,
             status: this.#status,
             priority: this.#priority,
+            paymentStatus: this.#paymentStatus,
             createdAt: this.#createdAt.toISOString(),
             ...this.getDeviceSpecs()    // each subclass provides its own data
         };
@@ -102,7 +115,7 @@ class ComputerRepair extends RepairItem {
     #notes;
 
     constructor(data = {}) {
-        super(data.id, data.status, data.priority);
+        super(data.id, data.status, data.priority, data.paymentStatus);
         this.#deviceName   = data.deviceName || "";
         this.#os           = data.os || "";
         this.#issue        = data.issue || "";
@@ -171,7 +184,7 @@ class SmartphoneRepair extends RepairItem {
     #notes;
 
     constructor(data = {}) {
-        super(data.id, data.status, data.priority);
+        super(data.id, data.status, data.priority, data.paymentStatus);
         this.#deviceName   = data.deviceName || "";
         this.#phoneOS      = data.phoneOS || "";
         this.#issue        = data.issue || "";
@@ -406,6 +419,7 @@ class DataStore {
     addRepair(data) {
         const repair = RepairFactory.create(data);
         this.#repairs.push(repair);
+        this.#reconcileInvoices();
         this.#save();
         return repair;
     }
@@ -417,6 +431,7 @@ class DataStore {
         const old = this.#repairs[idx];
         const merged = { ...old.toJSON(), ...updates, id };
         this.#repairs[idx] = RepairFactory.create(merged);
+        this.#reconcileInvoices();
         this.#save();
         return this.#repairs[idx];
     }
@@ -427,6 +442,16 @@ class DataStore {
     }
 
     getRepairById(id) { return this.#repairs.find(r => r.id === id); }
+
+    /** เปลี่ยนสถานะการชำระเงินของงานซ่อม แล้วอัปเดตใบแจ้งหนี้ให้ตรงกัน */
+    setPaymentStatus(id, paymentStatus) {
+        const repair = this.getRepairById(id);
+        if (!repair) throw new Error("ไม่พบงานซ่อมที่ต้องการ");
+        repair.paymentStatus = paymentStatus; // validated by setter (ENCAPSULATION)
+        this.#reconcileInvoices();
+        this.#save();
+        return repair;
+    }
 
     // ── CRUD: Customers ──
     get customers() { return [...this.#customers]; }
@@ -475,6 +500,38 @@ class DataStore {
         this.#invoices.push(inv);
         this.#save();
         return inv;
+    }
+
+    /** ตรวจสอบใบแจ้งหนี้ให้ตรงกับงานซ่อม (เรียกตอนเปิดแอป) */
+    syncInvoices() {
+        if (this.#reconcileInvoices()) this.#save();
+    }
+
+    /**
+     * - สร้างใบแจ้งหนี้ให้งานซ่อมที่ "ซ่อมเสร็จแล้ว / รอรับเครื่อง" หรือ "ชำระเงินแล้ว"
+     * - คัดลอกสถานะการชำระเงินของงานซ่อมไปที่ใบแจ้งหนี้
+     * คืนค่า true ถ้ามีการเปลี่ยนแปลง
+     */
+    #reconcileInvoices() {
+        let changed = false;
+        this.#repairs.forEach(r => {
+            const inv = this.#invoices.find(i => i.repairId === r.id);
+            if (inv) {
+                if (inv.paid !== r.isPaid) { inv.paid = r.isPaid; changed = true; }
+                return;
+            }
+            const finished = r.status === "Completed" || r.status === "Ready for Pickup";
+            if (finished || r.isPaid) {
+                const specs = r.getDeviceSpecs();
+                const laborCost = +(r.calculateCost() - specs.partsCost).toFixed(2); // POLYMORPHISM
+                this.#invoices.push(new Invoice({
+                    repairId: r.id, customerId: specs.customerId,
+                    partsCost: specs.partsCost, laborCost, paid: r.isPaid
+                }));
+                changed = true;
+            }
+        });
+        return changed;
     }
 
     // ── Stats (uses POLYMORPHISM: calculateCost() on each repair type) ──
@@ -536,9 +593,8 @@ const STATUS_TH = {
     "Completed":       "ซ่อมเสร็จแล้ว",
     "Ready for Pickup": "รอรับเครื่อง",
     "Cancelled":       "ยกเลิก",
-    "Paid":            "จ่ายแล้ว",
-    "Unpaid":          "ยังไม่จ่าย",
 };
+const PAYMENT_TH = { "Unpaid": "ยังไม่ชำระเงิน", "Paid": "ชำระเงินแล้ว" };
 const TYPE_TH = { "Computer": "คอมพิวเตอร์", "Smartphone": "สมาร์ตโฟน" };
 const PRIORITY_TH = { "Normal": "ปกติ", "High": "สูง", "Urgent": "ด่วนมาก" };
 const SPEC_TH = {
@@ -624,6 +680,7 @@ function openRepairModal(id = null) {
         document.getElementById("repairTechnician").value = specs.technicianId || "";
         document.getElementById("repairIssue").value = specs.issue;
         document.getElementById("repairStatus").value = r.status;
+        document.getElementById("repairPaymentStatus").value = r.paymentStatus;
         document.getElementById("repairPriority").value = r.priority;
         document.getElementById("repairPartsCost").value = specs.partsCost;
         document.getElementById("repairLaborHours").value = specs.laborHours;
@@ -650,6 +707,7 @@ function saveRepair(e) {
         technicianId: +document.getElementById("repairTechnician").value || null,
         issue:        document.getElementById("repairIssue").value,
         status:       document.getElementById("repairStatus").value,
+        paymentStatus: document.getElementById("repairPaymentStatus").value,
         priority:     document.getElementById("repairPriority").value,
         partsCost:    +document.getElementById("repairPartsCost").value || 0,
         laborHours:   +document.getElementById("repairLaborHours").value || 1,
@@ -676,6 +734,17 @@ function deleteRepair(id) {
     renderAll();
 }
 
+function togglePayment(id) {
+    const r = store.getRepairById(id);
+    if (!r) return;
+    const next = r.isPaid ? "Unpaid" : "Paid";
+    if (next === "Unpaid" && !confirm(`ยืนยันเปลี่ยนงานซ่อม #${id} เป็น "ยังไม่ชำระเงิน"?`)) return;
+    store.setPaymentStatus(id, next);
+    if (next === "Paid") toast(`งานซ่อม #${id} ชำระเงินแล้ว — อัปเดตใบแจ้งหนี้ในหน้าการเงินแล้ว`);
+    else toast(`งานซ่อม #${id} เปลี่ยนเป็นยังไม่ชำระเงิน`, "info");
+    renderAll();
+}
+
 function viewRepair(id) {
     const r = store.getRepairById(id);
     if (!r) return;
@@ -690,6 +759,7 @@ function viewRepair(id) {
             <div><strong>ประเภท:</strong> <span class="badge badge-${r.type === 'Computer' ? 'computer' : 'phone'}">${th(TYPE_TH, r.type)}</span></div>
             <div><strong>อุปกรณ์:</strong> ${specs.deviceName}</div>
             <div><strong>สถานะ:</strong> <span class="badge badge-${statusClass(r.status)}">${th(STATUS_TH, r.status)}</span></div>
+            <div><strong>การชำระเงิน:</strong> <span class="badge badge-${paymentClass(r.paymentStatus)}">${th(PAYMENT_TH, r.paymentStatus)}</span></div>
             <div><strong>ความสำคัญ:</strong> ${th(PRIORITY_TH, r.priority)}</div>
             <div><strong>วันที่:</strong> ${r.createdAt.toLocaleDateString("th-TH")}</div>
             <div><strong>ลูกค้า:</strong> ${cust ? cust.name : 'ไม่ระบุ'}</div>
@@ -820,6 +890,8 @@ function statusClass(s) {
     const map = { "Pending":"pending", "In Progress":"progress", "Completed":"completed", "Ready for Pickup":"ready", "Cancelled":"cancelled" };
     return map[s] || "pending";
 }
+
+function paymentClass(p) { return p === "Paid" ? "paid" : "unpaid"; }
 
 
 /* ═══════════════════════════════════════════════════════
@@ -975,9 +1047,11 @@ function renderRepairs() {
             <td><span class="badge badge-${r.type === 'Computer' ? 'computer' : 'phone'}">${th(TYPE_TH, r.type)}</span></td>
             <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${specs.issue}">${specs.issue}</td>
             <td><span class="badge badge-${statusClass(r.status)}">${th(STATUS_TH, r.status)}</span></td>
+            <td><span class="badge badge-${paymentClass(r.paymentStatus)}">${th(PAYMENT_TH, r.paymentStatus)}</span></td>
             <td><strong>฿${cost.toFixed(2)}</strong></td>
             <td>${r.createdAt.toLocaleDateString("th-TH")}</td>
             <td class="actions">
+                <button class="btn btn-sm ${r.isPaid ? 'btn-outline' : 'btn-success'}" onclick="togglePayment(${r.id})" title="${r.isPaid ? 'เปลี่ยนเป็นยังไม่ชำระเงิน' : 'ยืนยันชำระเงินแล้ว'}">💵</button>
                 <button class="btn btn-sm btn-outline" onclick="viewRepair(${r.id})" title="View">👁</button>
                 <button class="btn btn-sm btn-outline" onclick="openRepairModal(${r.id})" title="Edit">✏️</button>
                 <button class="btn btn-sm btn-danger" onclick="deleteRepair(${r.id})" title="Delete">🗑</button>
@@ -1047,18 +1121,7 @@ function renderTechnicians() {
 }
 
 function renderBilling() {
-    const completed = store.repairs.filter(r => r.status === "Completed" || r.status === "Ready for Pickup");
-
-    // Auto-generate invoices for completed repairs without one
-    const invoicedIds = new Set(store.invoices.map(i => i.repairId));
-    completed.forEach(r => {
-        if (!invoicedIds.has(r.id)) {
-            const specs = r.getDeviceSpecs();
-            const laborCost = specs.laborHours * (r.type === "Computer" ? 40 : 30);
-            store.addInvoice({ repairId: r.id, customerId: specs.customerId, partsCost: specs.partsCost, laborCost });
-        }
-    });
-
+    // ใบแจ้งหนี้ถูกสร้าง/อัปเดตสถานะการชำระเงินโดย DataStore (#reconcileInvoices)
     const invoices = store.invoices;
     const tbody = document.getElementById("billingTable");
     const empty = document.getElementById("billingEmpty");
@@ -1093,7 +1156,7 @@ function renderBilling() {
             <td>฿${inv.laborCost.toFixed(2)}</td>
             <td>฿${inv.tax.toFixed(2)}</td>
             <td><strong>฿${inv.total.toFixed(2)}</strong></td>
-            <td><span class="badge badge-${inv.paid ? 'completed' : 'pending'}">${inv.paid ? 'จ่ายแล้ว' : 'ยังไม่จ่าย'}</span></td>
+            <td><span class="badge badge-${inv.paid ? 'paid' : 'unpaid'}">${inv.paid ? PAYMENT_TH.Paid : PAYMENT_TH.Unpaid}</span></td>
         </tr>`;
     }).join("");
 }
@@ -1171,4 +1234,5 @@ document.addEventListener("mousemove", (e) => {
 });
 
 seedDemoData();
+store.syncInvoices();
 renderAll();
