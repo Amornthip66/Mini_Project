@@ -606,17 +606,28 @@ const SPEC_TH = {
 };
 const th = (dict, val) => dict[val] || val;
 
+/* ข้อความในช่องค้นหา เปลี่ยนตามหน้าที่เปิดอยู่ */
+const SEARCH_PLACEHOLDER = {
+    dashboard:   "ค้นหางานซ่อม ลูกค้า...",
+    repairs:     "ค้นหางานซ่อม ลูกค้า ช่าง สถานะ...",
+    customers:   "ค้นหาลูกค้า ชื่อ อีเมล เบอร์โทร...",
+    technicians: "ค้นหาช่างซ่อม ชื่อ ทักษะ...",
+    billing:     "ค้นหาใบแจ้งหนี้ ลูกค้า สถานะ...",
+};
+
+function navigateTo(page, { keepSearch = false } = {}) {
+    navItems.forEach(n => n.classList.toggle("active", n.dataset.page === page));
+    pages.forEach(p => p.classList.toggle("active", p.id === `page-${page}`));
+    document.getElementById("pageTitle").textContent = titles[page][0];
+    document.getElementById("pageSubtitle").textContent = titles[page][1];
+    const searchInput = document.getElementById("globalSearch");
+    if (!keepSearch) searchInput.value = "";   // แต่ละหน้าเริ่มค้นหาใหม่
+    searchInput.placeholder = SEARCH_PLACEHOLDER[page] || SEARCH_PLACEHOLDER.dashboard;
+    renderAll();
+}
+
 navItems.forEach(item => {
-    item.addEventListener("click", () => {
-        const page = item.dataset.page;
-        navItems.forEach(n => n.classList.remove("active"));
-        item.classList.add("active");
-        pages.forEach(p => p.classList.remove("active"));
-        document.getElementById(`page-${page}`).classList.add("active");
-        document.getElementById("pageTitle").textContent = titles[page][0];
-        document.getElementById("pageSubtitle").textContent = titles[page][1];
-        renderAll();
-    });
+    item.addEventListener("click", () => navigateTo(item.dataset.page));
 });
 
 document.getElementById("addNewBtn").addEventListener("click", () => openRepairModal());
@@ -906,6 +917,48 @@ function paymentClass(p) { return p === "Paid" ? "paid" : "unpaid"; }
 
 
 /* ═══════════════════════════════════════════════════════
+   SEARCH HELPERS
+   ═══════════════════════════════════════════════════════ */
+
+/** คำค้นหา: ตัดช่องว่างหัวท้าย, ตัวพิมพ์เล็ก, แยกเป็นคำตามช่องว่าง */
+function getSearchTerms() {
+    return document.getElementById("globalSearch").value
+        .trim().toLowerCase().split(/\s+/).filter(Boolean);
+}
+
+/** true ถ้า "ทุกคำ" ที่พิมพ์พบอยู่ในข้อมูลของแถวนั้น (ช่องใดก็ได้) */
+function matchesSearch(terms, fields) {
+    if (terms.length === 0) return true;
+    const haystack = fields
+        .filter(v => v !== null && v !== undefined && v !== "")
+        .join(" ").toLowerCase();
+    return terms.every(t => haystack.includes(t));
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, ch =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+}
+
+/**
+ * แสดงกล่อง empty-state
+ * - ยังไม่มีข้อมูลเลย → ข้อความเดิมของหน้านั้น
+ * - มีข้อมูลแต่ค้นหา/กรองแล้วไม่เจอ → "ไม่พบผลลัพธ์"
+ */
+function showEmptyState(el, isFiltered) {
+    if (el.dataset.defaultHtml === undefined) el.dataset.defaultHtml = el.innerHTML;
+    if (isFiltered) {
+        const q = document.getElementById("globalSearch").value.trim();
+        el.innerHTML = `<div class="icon">🔍</div><h4>ไม่พบผลลัพธ์</h4>
+            <p>${q ? `ไม่พบรายการที่ตรงกับ “${escapeHtml(q)}”` : "ไม่พบรายการที่ตรงกับตัวกรองที่เลือก"}</p>`;
+    } else {
+        el.innerHTML = el.dataset.defaultHtml;
+    }
+    el.style.display = "";
+}
+
+
+/* ═══════════════════════════════════════════════════════
    RENDERING — calls POLYMORPHIC methods on repair objects
    ═══════════════════════════════════════════════════════ */
 
@@ -1021,19 +1074,25 @@ function renderDashboard() {
 function renderRepairs() {
     const filterStatus = document.getElementById("filterStatus").value;
     const filterType   = document.getElementById("filterType").value;
-    const search       = document.getElementById("globalSearch").value.toLowerCase();
+    const terms        = getSearchTerms();
 
     let repairs = store.repairs;
 
     if (filterStatus) repairs = repairs.filter(r => r.status === filterStatus);
     if (filterType)   repairs = repairs.filter(r => r.type === filterType);
-    if (search) {
+    if (terms.length) {
         repairs = repairs.filter(r => {
-            const specs = r.getDeviceSpecs();
+            const specs = r.getDeviceSpecs(); // POLYMORPHISM
             const cust  = store.getCustomerById(specs.customerId);
-            return specs.deviceName.toLowerCase().includes(search) ||
-                   specs.issue.toLowerCase().includes(search) ||
-                   (cust && cust.name.toLowerCase().includes(search));
+            const tech  = store.getTechnicianById(specs.technicianId);
+            return matchesSearch(terms, [
+                `#${r.id}`, specs.deviceName, specs.issue, specs.os, specs.phoneOS, specs.notes,
+                r.type, th(TYPE_TH, r.type),
+                r.status, th(STATUS_TH, r.status),
+                th(PAYMENT_TH, r.paymentStatus), th(PRIORITY_TH, r.priority),
+                cust?.name, cust?.phone, cust?.email, tech?.name,
+                r.createdAt.toLocaleDateString("th-TH"),
+            ]);
         });
     }
 
@@ -1042,7 +1101,7 @@ function renderRepairs() {
 
     if (repairs.length === 0) {
         tbody.innerHTML = "";
-        empty.style.display = "";
+        showEmptyState(empty, store.repairs.length > 0);
         return;
     }
 
@@ -1072,13 +1131,15 @@ function renderRepairs() {
 }
 
 function renderCustomers() {
-    const customers = store.customers;
+    const terms = getSearchTerms();
+    const customers = store.customers.filter(c =>
+        matchesSearch(terms, [`#${c.id}`, c.name, c.email, c.phone, c.address]));
     const tbody = document.getElementById("customersTable");
     const empty = document.getElementById("customersEmpty");
 
     if (customers.length === 0) {
         tbody.innerHTML = "";
-        empty.style.display = "";
+        showEmptyState(empty, store.customers.length > 0);
         return;
     }
 
@@ -1102,13 +1163,15 @@ function renderCustomers() {
 }
 
 function renderTechnicians() {
-    const techs = store.technicians;
+    const terms = getSearchTerms();
+    const techs = store.technicians.filter(t =>
+        matchesSearch(terms, [`#${t.id}`, t.name, t.phone, t.specialization, th(SPEC_TH, t.specialization), ...t.skills]));
     const tbody = document.getElementById("techniciansTable");
     const empty = document.getElementById("techniciansEmpty");
 
     if (techs.length === 0) {
         tbody.innerHTML = "";
-        empty.style.display = "";
+        showEmptyState(empty, store.technicians.length > 0);
         return;
     }
 
@@ -1149,14 +1212,26 @@ function renderBilling() {
         <div class="stat-card"><div class="stat-icon red">📊</div><div class="stat-info"><h3>฿${totalRev.toFixed(2)}</h3><p>รายได้รวม</p></div></div>
     `;
 
-    if (invoices.length === 0) {
+    // ตารางแสดงเฉพาะใบแจ้งหนี้ที่ตรงกับคำค้นหา (การ์ดสรุปด้านบนยังคิดจากทั้งหมด)
+    const terms = getSearchTerms();
+    const shown = invoices.filter(inv => {
+        const repair = store.getRepairById(inv.repairId);
+        const cust   = store.getCustomerById(inv.customerId);
+        return matchesSearch(terms, [
+            `INV-${String(inv.id).padStart(4, '0')}`, `#${inv.repairId}`,
+            cust?.name, repair?.getDeviceSpecs().deviceName,
+            inv.paid ? PAYMENT_TH.Paid : PAYMENT_TH.Unpaid,
+        ]);
+    });
+
+    if (shown.length === 0) {
         tbody.innerHTML = "";
-        empty.style.display = "";
+        showEmptyState(empty, invoices.length > 0);
         return;
     }
 
     empty.style.display = "none";
-    tbody.innerHTML = invoices.map(inv => {
+    tbody.innerHTML = shown.map(inv => {
         const repair = store.getRepairById(inv.repairId);
         const cust   = store.getCustomerById(inv.customerId);
         return `<tr>
@@ -1179,7 +1254,27 @@ function renderBilling() {
 // ── Filter event listeners ──
 document.getElementById("filterStatus").addEventListener("change", renderRepairs);
 document.getElementById("filterType").addEventListener("change", renderRepairs);
-document.getElementById("globalSearch").addEventListener("input", renderRepairs);
+
+const searchInput = document.getElementById("globalSearch");
+searchInput.addEventListener("input", () => {
+    const activePage = document.querySelector(".page.active").id.replace("page-", "");
+    // พิมพ์ค้นหาจากหน้าแดชบอร์ด → พาไปหน้างานซ่อมพร้อมผลการค้นหา
+    if (activePage === "dashboard" && searchInput.value.trim()) {
+        navigateTo("repairs", { keepSearch: true });
+        return;
+    }
+    renderRepairs();
+    renderCustomers();
+    renderTechnicians();
+    renderBilling();
+});
+// กด Esc เพื่อล้างคำค้นหา
+searchInput.addEventListener("keydown", e => {
+    if (e.key === "Escape" && searchInput.value) {
+        searchInput.value = "";
+        searchInput.dispatchEvent(new Event("input"));
+    }
+});
 
 // ── Subscribe to data changes ──
 store.subscribe(renderAll);
